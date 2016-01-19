@@ -6,18 +6,22 @@
 #
 # This file is released into the public domain.
 
-CC	= gcc
+# Define variables
 CXX	= g++
-CFLAGS	= -Wall -O2
-CXXFLAGS= $(CFLAGS)
+CXXFLAGS= -Wall -O2
 
+# List of sources and files to build from them
 SRCS	= pi_serial.cc pi_omp.cc pi_omp_dyn.cc pi_mpi.cc
-BINS	= $(SRCS:.cc=)
+BINS	= $(SRCS:.cc=) # replaces .cc extension with empty string
 
-.PHONY:		all
+# First (default) target
 all: $(BINS)
 
-pi_serial:	LDLIBS += -lrt
+# alternate targets used to clean up directory
+clean clobber:
+	$(RM) $(BINS) wtime.o
+
+# Explicit dependencies and adjustments to variables
 pi_serial:	pi_serial.cc wtime.o
 
 pi_omp:		CXXFLAGS += -fopenmp
@@ -30,7 +34,3 @@ pi_mpi:		CXX = mpic++
 pi_mpi:		pi_mpi.cc
 
 wtime.o:	wtime.c wtime.h
-
-.PHONY:		clean clobber
-clean clobber:
-	$(RM) $(BINS) wtime.o
