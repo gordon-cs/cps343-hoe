@@ -16,11 +16,10 @@ C
       PARAMETER (N=500)
       DOUBLE PRECISION A(N,N),B(N,N)
       DOUBLE PRECISION C1(N,N),C2(N,N),C3(N,N)
-      DOUBLE PRECISION CS1,CS2,CS3
-      DOUBLE PRECISION CMPPRD
+      INTEGER ICMPPR
       INTEGER I,J
       REAL T1,T2
-      REAL TIMIJK,TIMIKJ,TIMJKI
+      REAL TIMIJK,TIMJKI,TIMIKJ
 C
       WRITE (*,"(1X,'MATRIX-MATRIX MULTIPLY: MATRICES ARE ',
      +  I5,' X',I5)") N,N
@@ -29,8 +28,6 @@ C     INITIALIZE MATRICES
 C
       DO J=1,N
          DO I=1,N
-C           A(I,J)=0.1*MOD(2*I+5*J,10)
-C           B(I,J)=0.1*MOD(4*I+3*J,10)
             CALL RANDOM_NUMBER(A(I,J))
             CALL RANDOM_NUMBER(B(I,J))
          END DO
@@ -43,19 +40,19 @@ C
       CALL CPU_TIME(T2)
       TIMIJK=T2-T1
 C
-C     IKJ PRODUCT
-C
-      CALL CPU_TIME(T1)
-      CALL MATIKJ(C2,A,B,N)
-      CALL CPU_TIME(T2)
-      TIMIKJ=T2-T1
-C
 C     JKI PRODUCT
 C
       CALL CPU_TIME(T1)
-      CALL MATJKI(C3,A,B,N)
+      CALL MATJKI(C2,A,B,N)
       CALL CPU_TIME(T2)
       TIMJKI=T2-T1
+C
+C     IKJ PRODUCT
+C
+      CALL CPU_TIME(T1)
+      CALL MATIKJ(C3,A,B,N)
+      CALL CPU_TIME(T2)
+      TIMIKJ=T2-T1
 C
 C     OUTPUT RESULTS
 C
@@ -69,12 +66,14 @@ C
 C
 C     COMPARE PRODUCTS
 C
-      CS1=CMPPRD(C1,C2,N)
-      CS2=CMPPRD(C1,C3,N)
-      CS3=CMPPRD(C2,C3,N)
-      IF ((CS1/=CS2).OR.(CS1/=CS3).OR.(CS2/=CS3)) THEN
-        WRITE(*,"(1X,'CHECKSUM ERROR:',1X,F18.9,1X,F18.9,1X,F18.9)")
-     +    CS1,CS2,CS3
+      IF (ICMPPR(C1,C2,N).GT.0) THEN
+         WRITE(*,"(1X,'VALIDATION ERROR: C',I1,' /= C',I1)") 1,2
+      ENDIF
+      IF (ICMPPR(C1,C3,N).GT.0) THEN
+         WRITE(*,"(1X,'VALIDATION ERROR: C',I1,' /= C',I1)") 1,3
+      ENDIF
+      IF (ICMPPR(C2,C3,N).GT.0) THEN
+         WRITE(*,"(1X,'VALIDATION ERROR: C',I1,' /= C',I1)") 2,3
       ENDIF
 C
 C     ALL DONE
@@ -93,26 +92,6 @@ C
          DO J=1,N
             C(I,J)=0.0
             DO K=1,N
-               C(I,J)=C(I,J)+A(I,K)*B(K,J)
-            END DO
-         END DO
-      END DO
-      RETURN
-      END
-C
-C-----------------------------------------------------------------------------
-C IKJ MATRIX-MATRIX PRODUCT
-C-----------------------------------------------------------------------------
-C
-      SUBROUTINE MATIKJ(C,A,B,N)
-      INTEGER N
-      DOUBLE PRECISION C(N,N),A(N,N),B(N,N)
-      DO I=1,N
-         DO J=1,N
-            C(I,J)=0.0
-         END DO
-         DO K=1,N
-            DO J=1,N   
                C(I,J)=C(I,J)+A(I,K)*B(K,J)
             END DO
          END DO
@@ -141,23 +120,43 @@ C
       END
 C
 C-----------------------------------------------------------------------------
+C IKJ MATRIX-MATRIX PRODUCT
+C-----------------------------------------------------------------------------
+C
+      SUBROUTINE MATIKJ(C,A,B,N)
+      INTEGER N
+      DOUBLE PRECISION C(N,N),A(N,N),B(N,N)
+      DO I=1,N
+         DO J=1,N
+            C(I,J)=0.0
+         END DO
+         DO K=1,N
+            DO J=1,N   
+               C(I,J)=C(I,J)+A(I,K)*B(K,J)
+            END DO
+         END DO
+      END DO
+      RETURN
+      END
+C
+C-----------------------------------------------------------------------------
 C COMPARE PRODUCTS
 C-----------------------------------------------------------------------------
 C
-      DOUBLE PRECISION FUNCTION CMPPRD(C,D,N)
+      INTEGER FUNCTION ICMPPR(C,D,N)
       INTEGER N
       DOUBLE PRECISION C(N,N),D(N,N)
-      DOUBLE PRECISION CHECK
-      CHECK=0.0
+      INTEGER ICOUNT
+      ICOUNT=0
       DO I=1,N
          DO J=1,N
-            CHECK=CHECK+C(I,J)
             IF (C(I,J).NE.D(I,J)) THEN
+               ICOUNT=ICOUNT+1
                WRITE (*,*) '****WARNING****'
                WRITE (*,"(1X,'(',I3,',',I3,'): ',F15.5,' <> ',F15.5)")
      +              I,J,C(I,J),D(I,J)
             ENDIF
          END DO
       END DO
-      CMPPRD=CHECK
+      ICMPPR=ICOUNT
       END

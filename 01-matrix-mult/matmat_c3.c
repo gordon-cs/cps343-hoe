@@ -51,28 +51,6 @@ void matmat_ijk( double** c, double** a, double** b, int n )
 }
 
 /*----------------------------------------------------------------------------
- * Compute matrix-matrix product using ikj loop order
- */
-void matmat_ikj( double** c, double** a, double** b, int n )
-{
-    int i, j, k;
-    for ( i = 0; i < n; i++ )
-    {
-	for ( j = 0; j < n; j++ )
-	{
-	    c[i][j] = 0.0;
-	}
-	for ( k = 0; k < n; k++ )
-	{
-	    for ( j = 0; j < n; j++ )
-	    {
-		c[i][j] += a[i][k] * b[k][j];
-	    }
-	}
-    }
-}
-
-/*----------------------------------------------------------------------------
  * Compute matrix-matrix product using jki loop order
  */
 void matmat_jki( double** c, double** a, double** b, int n )
@@ -95,24 +73,46 @@ void matmat_jki( double** c, double** a, double** b, int n )
 }
 
 /*----------------------------------------------------------------------------
- * Verify product
+ * Compute matrix-matrix product using ikj loop order
  */
-double verify( double** c, double** d, int n )
+void matmat_ikj( double** c, double** a, double** b, int n )
 {
-    int i, j;
-    double checksum = 0.0;
+    int i, j, k;
     for ( i = 0; i < n; i++ )
     {
 	for ( j = 0; j < n; j++ )
 	{
-	    checksum += c[i][j];
+	    c[i][j] = 0.0;
+	}
+	for ( k = 0; k < n; k++ )
+	{
+	    for ( j = 0; j < n; j++ )
+	    {
+		c[i][j] += a[i][k] * b[k][j];
+	    }
+	}
+    }
+}
+
+/*----------------------------------------------------------------------------
+ * Verify product
+ */
+int verify( double** c, double** d, int n )
+{
+    int i, j;
+    int status = 0;
+    for ( i = 0; i < n; i++ )
+    {
+	for ( j = 0; j < n; j++ )
+	{
 	    if ( c[i][j] != d[i][j] )
 	    {
+		status++;
 		printf( "[%d][%d]: c = %f; d = %f\n", i, j, c[i][j], d[i][j] );
 	    }
 	}
     }
-    return checksum;
+    return status;
 }
 
 /*----------------------------------------------------------------------------
@@ -121,12 +121,11 @@ double verify( double** c, double** d, int n )
 int main( int argc, char* argv[] )
 {
     double t0, t1;
-    double ijk_time;
-    double ikj_time;
-    double jki_time;
-    double cs1, cs2, cs3;
-    const double mflop_count = 2.0 * N * N * N / 1.0e6;
+    double ijk_time, jki_time, ikj_time;
     int i, j;
+
+    const double mflop_count = 2.0 * N * N * N / 1.0e6;
+
     double** a;   /* matrix A */
     double** b;   /* matrix B */
     double** c1;   /* matrix C = A * B (computed via ijk loop order) */
@@ -168,8 +167,6 @@ int main( int argc, char* argv[] )
     {
 	for ( j = 0; j < N; j++ )
 	{
-/*	    a[i][j] = 0.1 * ( ( 2 * (i+1) + 5 * (j+1) ) % 10 );
-	    b[i][j] = 0.1 * ( ( 4 * (i+1) + 3 * (j+1) ) % 10 );*/
 	    a[i][j] = (double) random() / RAND_MAX;
 	    b[i][j] = (double) random() / RAND_MAX;
 	}
@@ -184,28 +181,27 @@ int main( int argc, char* argv[] )
     ijk_time = t1 - t0;
 
     /*
-     * ikj product
-     */
-    t0 = wtime();
-    matmat_ikj( c2, a, b, N );
-    t1 = wtime();
-    ikj_time = t1 - t0;
-
-    /*
      * jki product
      */
     t0 = wtime();
-    matmat_jki( c3, a, b, N );
+    matmat_jki( c2, a, b, N );
     t1 = wtime();
     jki_time = t1 - t0;
+
+    /*
+     * ikj product
+     */
+    t0 = wtime();
+    matmat_ikj( c3, a, b, N );
+    t1 = wtime();
+    ikj_time = t1 - t0;
 
     /*
      * output results
      */
     printf( "        ijk                 jki                ikj\n" );
     printf( "------------------  ------------------  ------------------\n" );
-    printf( "%10.6g sec%16.6g sec%16.6g sec\n",
-	    ijk_time, jki_time, ikj_time );
+    printf( "%10.6g sec%16.6g sec%16.6g sec\n", ijk_time, jki_time, ikj_time );
     printf( "%10.2f mflops %12.2f mflops %12.2f mflops\n",
 	    mflop_count / ijk_time, mflop_count / jki_time,
 	    mflop_count / ikj_time );
@@ -213,13 +209,20 @@ int main( int argc, char* argv[] )
     /*
      * verify products
      */
-    cs1 = verify( c1, c2, N );
-    cs2 = verify( c1, c3, N );
-    cs3 = verify( c2, c3, N );
-
-    if ( cs1 != cs2 || cs1 != cs3 || cs2 != cs3 )
+    if ( verify( c1, c2, N ) )
     {
-	printf( "checksum error: %18.9f %18.9f %18.9f\n", cs1, cs2, cs3 );
+        printf( "Verification error: c1 != c2\n" );
+        exit( 1 );
+    }
+    if ( verify( c1, c3, N ) )
+    {
+        printf( "Verification error: c1 != c3\n" );
+        exit( 1 );
+    }
+    if ( verify( c2, c3, N ) )
+    {
+        printf( "Verification error: c2 != c3\n" );
+        exit( 1 );
     }
 
     /*
