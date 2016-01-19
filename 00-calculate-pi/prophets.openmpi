@@ -1,0 +1,18 @@
+# OpenMPI hostfile for Minor Prophets cluster
+#
+# Usage: mpiexec -machinefile prophets.openmpi -n N EXE
+#   - N is the number of processes (1 to 48 inclusive)
+#   - EXE is the name of the program to run
+#
+mp01.cs.gordon.edu slots=4 max_slots=4
+mp02.cs.gordon.edu slots=4 max_slots=4
+mp03.cs.gordon.edu slots=4 max_slots=4
+mp04.cs.gordon.edu slots=4 max_slots=4
+mp05.cs.gordon.edu slots=4 max_slots=4
+mp06.cs.gordon.edu slots=4 max_slots=4
+mp07.cs.gordon.edu slots=4 max_slots=4
+mp08.cs.gordon.edu slots=4 max_slots=4
+mp09.cs.gordon.edu slots=4 max_slots=4
+mp10.cs.gordon.edu slots=4 max_slots=4
+mp11.cs.gordon.edu slots=4 max_slots=4
+mp12.cs.gordon.edu slots=4 max_slots=4
