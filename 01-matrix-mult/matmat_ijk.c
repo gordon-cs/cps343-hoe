@@ -39,14 +39,14 @@ void matmat_ijk( double** c, double** a, double** b, int n )
     int i, j, k;
     for ( i = 0; i < n; i++ )
     {
-	for ( j = 0; j < n; j++ )
-	{
-	    c[i][j] = 0.0;
-	    for ( k = 0; k < n; k++ )
-	    {
-		c[i][j] += a[i][k] * b[k][j];
-	    }
-	}
+        for ( j = 0; j < n; j++ )
+        {
+            c[i][j] = 0.0;
+            for ( k = 0; k < n; k++ )
+            {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+        }
     }
 }
 
@@ -60,8 +60,8 @@ void matmat_ikj( double** c, double** a, double** b, int n )
      */
     int i, j;
     for ( i = 0; i < n; i++ )
-	for ( j = 0; j < n; j++ )
-	    c[i][j] = 0.0;
+        for ( j = 0; j < n; j++ )
+            c[i][j] = 0.0;
 }
 
 /*----------------------------------------------------------------------------
@@ -74,8 +74,8 @@ void matmat_jik( double** c, double** a, double** b, int n )
      */
     int i, j;
     for ( i = 0; i < n; i++ )
-	for ( j = 0; j < n; j++ )
-	    c[i][j] = 0.0;
+        for ( j = 0; j < n; j++ )
+            c[i][j] = 0.0;
 }
 
 /*----------------------------------------------------------------------------
@@ -86,17 +86,17 @@ void matmat_jki( double** c, double** a, double** b, int n )
     int i, j, k;
     for ( j = 0; j < n; j++ )
     {
-	for ( i = 0; i < n; i++ )
-	{
-	    c[i][j] = 0.0;
-	}
-	for ( k = 0; k < n; k++ )
-	{
-	    for ( i = 0; i < n; i++ )
-	    {
-		c[i][j] += a[i][k] * b[k][j];
-	    }
-	}
+        for ( i = 0; i < n; i++ )
+        {
+            c[i][j] = 0.0;
+        }
+        for ( k = 0; k < n; k++ )
+        {
+            for ( i = 0; i < n; i++ )
+            {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+        }
     }
 }
 
@@ -110,8 +110,8 @@ void matmat_kij( double** c, double** a, double** b, int n )
      */
     int i, j;
     for ( i = 0; i < n; i++ )
-	for ( j = 0; j < n; j++ )
-	    c[i][j] = 0.0;
+        for ( j = 0; j < n; j++ )
+            c[i][j] = 0.0;
 }
 
 /*----------------------------------------------------------------------------
@@ -124,8 +124,8 @@ void matmat_kji( double** c, double** a, double** b, int n )
      */
     int i, j;
     for ( i = 0; i < n; i++ )
-	for ( j = 0; j < n; j++ )
-	    c[i][j] = 0.0;
+        for ( j = 0; j < n; j++ )
+            c[i][j] = 0.0;
 }
 
 /*----------------------------------------------------------------------------
@@ -137,10 +137,10 @@ double verify( double** c, int n )
     double checksum = 0.0;
     for ( i = 0; i < n; i++ )
     {
-	for ( j = 0; j < n; j++ )
-	{
-	    checksum += c[i][j];
-	}
+        for ( j = 0; j < n; j++ )
+        {
+            checksum += c[i][j];
+        }
     }
     return checksum;
 }
@@ -159,7 +159,7 @@ int main( int argc, char* argv[] )
     double** c;   /* matrix C = A * B */
 
     printf( "Matrix-Matrix multiply (array of pointers): Matrices are %dx%d\n",
-	    N, N );
+            N, N );
 
     /*
      * allocate memory for matrices.
@@ -174,9 +174,9 @@ int main( int argc, char* argv[] )
     c[0] = (double*) malloc( N * N * sizeof( double ) );
     for ( i = 1; i < N; i++ )
     {
-	a[i] = &a[0][i * N];
-	b[i] = &b[0][i * N];
-	c[i] = &c[0][i * N];
+        a[i] = &a[0][i * N];
+        b[i] = &b[0][i * N];
+        c[i] = &c[0][i * N];
     }
     
     /*
@@ -185,11 +185,11 @@ int main( int argc, char* argv[] )
     srandom( (unsigned int) time( NULL ) );
     for ( i = 0; i < N; i++ )
     {
-	for ( j = 0; j < N; j++ )
-	{
-	    a[i][j] = (double) random() / RAND_MAX;
-	    b[i][j] = (double) random() / RAND_MAX;
-	}
+        for ( j = 0; j < N; j++ )
+        {
+            a[i][j] = (double) random() / RAND_MAX;
+            b[i][j] = (double) random() / RAND_MAX;
+        }
     }
 
     /*
@@ -200,7 +200,7 @@ int main( int argc, char* argv[] )
     t1 = wtime();
     etime = t1 - t0;
     printf( "ijk: %10.6f sec,%12.2f mflops,   checksum = %18.6f\n",
-	    etime, mflop_count / etime, verify( c, N ) );
+            etime, mflop_count / etime, verify( c, N ) );
 
     /*
      * ikj product
@@ -210,7 +210,7 @@ int main( int argc, char* argv[] )
     t1 = wtime();
     etime = t1 - t0;
     printf( "ikj: %10.6f sec,%12.2f mflops,   checksum = %18.6f\n",
-	    etime, mflop_count / etime, verify( c, N ) );
+            etime, mflop_count / etime, verify( c, N ) );
 
     /*
      * jik product
@@ -220,7 +220,7 @@ int main( int argc, char* argv[] )
     t1 = wtime();
     etime = t1 - t0;
     printf( "jik: %10.6f sec,%12.2f mflops,   checksum = %18.6f\n",
-	    etime, mflop_count / etime, verify( c, N ) );
+            etime, mflop_count / etime, verify( c, N ) );
 
     /*
      * jki product
@@ -230,7 +230,7 @@ int main( int argc, char* argv[] )
     t1 = wtime();
     etime = t1 - t0;
     printf( "jki: %10.6f sec,%12.2f mflops,   checksum = %18.6f\n",
-	    etime, mflop_count / etime, verify( c, N ) );
+            etime, mflop_count / etime, verify( c, N ) );
 
     /*
      * kij product
@@ -240,7 +240,7 @@ int main( int argc, char* argv[] )
     t1 = wtime();
     etime = t1 - t0;
     printf( "kij: %10.6f sec,%12.2f mflops,   checksum = %18.6f\n",
-	    etime, mflop_count / etime, verify( c, N ) );
+            etime, mflop_count / etime, verify( c, N ) );
 
     /*
      * kji product
@@ -250,7 +250,7 @@ int main( int argc, char* argv[] )
     t1 = wtime();
     etime = t1 - t0;
     printf( "kji: %10.6f sec,%12.2f mflops,   checksum = %18.6f\n",
-	    etime, mflop_count / etime, verify( c, N ) );
+            etime, mflop_count / etime, verify( c, N ) );
 
     /*
      * all done

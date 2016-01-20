@@ -41,14 +41,14 @@ void matmat_ijk( double* c, double* a, double* b, int n )
     int i, j, k;
     for ( i = 0; i < n; i++ )
     {
-	for ( j = 0; j < n; j++ )
-	{
-	    c[IDX(i,j,n)] = 0.0;
-	    for ( k = 0; k < n; k++ )
-	    {
-		c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
-	    }
-	}
+        for ( j = 0; j < n; j++ )
+        {
+            c[IDX(i,j,n)] = 0.0;
+            for ( k = 0; k < n; k++ )
+            {
+                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+            }
+        }
     }
 }
 
@@ -60,17 +60,17 @@ void matmat_jki( double* c, double* a, double* b, int n )
     int i, j, k;
     for ( j = 0; j < n; j++ )
     {
-	for ( i = 0; i < n; i++ )
-	{
-	    c[IDX(i,j,n)] = 0.0;
-	}
-	for ( k = 0; k < n; k++ )
-	{
-	    for ( i = 0; i < n; i++ )
-	    {
-		c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
-	    }
-	}
+        for ( i = 0; i < n; i++ )
+        {
+            c[IDX(i,j,n)] = 0.0;
+        }
+        for ( k = 0; k < n; k++ )
+        {
+            for ( i = 0; i < n; i++ )
+            {
+                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+            }
+        }
     }
 }
 
@@ -82,17 +82,17 @@ void matmat_ikj( double* c, double* a, double* b, int n )
     int i, j, k;
     for ( i = 0; i < n; i++ )
     {
-	for ( j = 0; j < n; j++ )
-	{
-	    c[IDX(i,j,n)] = 0.0;
-	}
-	for ( k = 0; k < n; k++ )
-	{
-	    for ( j = 0; j < n; j++ )
-	    {
-		c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
-	    }
-	}
+        for ( j = 0; j < n; j++ )
+        {
+            c[IDX(i,j,n)] = 0.0;
+        }
+        for ( k = 0; k < n; k++ )
+        {
+            for ( j = 0; j < n; j++ )
+            {
+                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+            }
+        }
     }
 }
 
@@ -105,15 +105,15 @@ int verify( double* d, double* c, int n )
     int status = 0;
     for ( i = 0; i < n; i++ )
     {
-	for ( j = 0; j < n; j++ )
-	{
-	    if ( c[IDX(i,j,n)] != d[IDX(i,j,n)] )
-	    {
-		status++;
-		printf( "[%d][%d]: c = %f; d = %f\n", i, j,
-			c[IDX(i,j,n)], d[IDX(i,j,n)] );
-	    }
-	}
+        for ( j = 0; j < n; j++ )
+        {
+            if ( c[IDX(i,j,n)] != d[IDX(i,j,n)] )
+            {
+                status++;
+                printf( "[%d][%d]: c = %f; d = %f\n", i, j,
+                        c[IDX(i,j,n)], d[IDX(i,j,n)] );
+            }
+        }
     }
     return status;
 }
@@ -153,11 +153,11 @@ int main( int argc, char* argv[] )
     srandom( (unsigned int) time( NULL ) );
     for ( i = 0; i < N; i++ )
     {
-	for ( j = 0; j < N; j++ )
-	{
-	    a[IDX(i,j,N)] = (double) random() / RAND_MAX;
-	    b[IDX(i,j,N)] = (double) random() / RAND_MAX;
-	}
+        for ( j = 0; j < N; j++ )
+        {
+            a[IDX(i,j,N)] = (double) random() / RAND_MAX;
+            b[IDX(i,j,N)] = (double) random() / RAND_MAX;
+        }
     }
 
     /*
@@ -191,8 +191,8 @@ int main( int argc, char* argv[] )
     printf( "------------------  ------------------  ------------------\n" );
     printf( "%10.6g sec%16.6g sec%16.6g sec\n", ijk_time, jki_time, ikj_time );
     printf( "%10.2f mflops %12.2f mflops %12.2f mflops\n",
-	    mflop_count / ijk_time, mflop_count / jki_time,
-	    mflop_count / ikj_time );
+            mflop_count / ijk_time, mflop_count / jki_time,
+            mflop_count / ikj_time );
 
     /*
      * verify products

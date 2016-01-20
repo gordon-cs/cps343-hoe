@@ -71,9 +71,9 @@ int main( int argc, char *argv[] )
     c[0] = new double [n * n];
     for ( int i = 1; i < n; i++ )
     {
-	a[i] = &a[0][i * n];
-	b[i] = &b[0][i * n];
-	c[i] = &c[0][i * n];
+        a[i] = &a[0][i * n];
+        b[i] = &b[0][i * n];
+        c[i] = &c[0][i * n];
     }
 #endif
 
@@ -81,18 +81,18 @@ int main( int argc, char *argv[] )
 
     for ( int i = 0; i < n; i++ )
     {
-	for ( int j = 0; j < n; j++ )
-	{
+        for ( int j = 0; j < n; j++ )
+        {
 #if defined(USE_MACRO)
-	    a[idx(i,j,n)] = (double) random() / RAND_MAX;
-	    b[idx(i,j,n)] = (double) random() / RAND_MAX;
-	    c[idx(i,j,n)] = 0.0;
+            a[idx(i,j,n)] = (double) random() / RAND_MAX;
+            b[idx(i,j,n)] = (double) random() / RAND_MAX;
+            c[idx(i,j,n)] = 0.0;
 #else
-	    a[i][j] = (double) random() / RAND_MAX;
-	    b[i][j] = (double) random() / RAND_MAX;
-	    c[i][j] = 0.0;
+            a[i][j] = (double) random() / RAND_MAX;
+            b[i][j] = (double) random() / RAND_MAX;
+            c[i][j] = 0.0;
 #endif
-	}
+        }
     }
 
     // compute product
@@ -100,17 +100,17 @@ int main( int argc, char *argv[] )
     double t1 = wtime();
     for ( int i = 0; i < n; i++ )
     {
-	for ( int k = 0; k < n; k++ )
-	{
-	    for ( int j = 0; j < n; j++ )
-	    {
+        for ( int k = 0; k < n; k++ )
+        {
+            for ( int j = 0; j < n; j++ )
+            {
 #if defined(USE_MACRO)
-		c[idx(i,j,n)] += a[idx(i,k,n)] * b[idx(k,j,n)];
+                c[idx(i,j,n)] += a[idx(i,k,n)] * b[idx(k,j,n)];
 #else
-		c[i][j] += a[i][k] * b[k][j];
+                c[i][j] += a[i][k] * b[k][j];
 #endif
-	    }
-	}
+            }
+        }
     }
     double t2 = wtime();
 #if defined(USE_MACRO)

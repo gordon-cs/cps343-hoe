@@ -19,7 +19,7 @@ CXX	= g++
 CXXFLAGS= $(GNUFLAGS)
 
 BINS = matmat_f77 matmat_f95 matmat_c1 matmat_c2 matmat_c3 matmat_ijk \
-	timing_1D timing_2D# matmat_papi
+	timing_1D timing_2D
 
 #
 # Build targets
@@ -51,8 +51,6 @@ matmat_c3: matmat_c3.c
 matmat_ijk: LDLIBS += -lrt
 matmat_ijk: matmat_ijk.c
 
-matmat_papi: LDLIBS += -lrt -lpapi
-matmat_papi: matmat_papi.c
 #
 # C++ needs librt for timing.  LINK.C command explicitly listed since target
 # name does not match source name minus extension.

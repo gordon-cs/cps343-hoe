@@ -49,14 +49,14 @@ void matmat_ijk( double c[N][N], double a[N][N], double b[N][N], int n )
     int i, j, k;
     for ( i = 0; i < n; i++ )
     {
-	for ( j = 0; j < n; j++ )
-	{
-	    c[i][j] = 0.0;
-	    for ( k = 0; k < n; k++ )
-	    {
-		c[i][j] += a[i][k] * b[k][j];
-	    }
-	}
+        for ( j = 0; j < n; j++ )
+        {
+            c[i][j] = 0.0;
+            for ( k = 0; k < n; k++ )
+            {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+        }
     }
 }
 
@@ -68,17 +68,17 @@ void matmat_jki( double c[N][N], double a[N][N], double b[N][N], int n )
     int i, j, k;
     for ( j = 0; j < n; j++ )
     {
-	for ( i = 0; i < n; i++ )
-	{
-	    c[i][j] = 0.0;
-	}
-	for ( k = 0; k < n; k++ )
-	{
-	    for ( i = 0; i < n; i++ )
-	    {
-		c[i][j] += a[i][k] * b[k][j];
-	    }
-	}
+        for ( i = 0; i < n; i++ )
+        {
+            c[i][j] = 0.0;
+        }
+        for ( k = 0; k < n; k++ )
+        {
+            for ( i = 0; i < n; i++ )
+            {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+        }
     }
 }
 
@@ -90,17 +90,17 @@ void matmat_ikj( double c[N][N], double a[N][N], double b[N][N], int n )
     int i, j, k;
     for ( i = 0; i < n; i++ )
     {
-	for ( j = 0; j < n; j++ )
-	{
-	    c[i][j] = 0.0;
-	}
-	for ( k = 0; k < n; k++ )
-	{
-	    for ( j = 0; j < n; j++ )
-	    {
-		c[i][j] += a[i][k] * b[k][j];
-	    }
-	}
+        for ( j = 0; j < n; j++ )
+        {
+            c[i][j] = 0.0;
+        }
+        for ( k = 0; k < n; k++ )
+        {
+            for ( j = 0; j < n; j++ )
+            {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+        }
     }
 }
 
@@ -113,14 +113,14 @@ int verify( double c[N][N], double d[N][N], int n )
     int status = 0;
     for ( i = 0; i < n; i++ )
     {
-	for ( j = 0; j < n; j++ )
-	{
-	    if ( c[i][j] != d[i][j] )
-	    {
-		status++;
-		printf( "[%d][%d]: c = %f; d = %f\n", i, j, c[i][j], d[i][j] );
-	    }
-	}
+        for ( j = 0; j < n; j++ )
+        {
+            if ( c[i][j] != d[i][j] )
+            {
+                status++;
+                printf( "[%d][%d]: c = %f; d = %f\n", i, j, c[i][j], d[i][j] );
+            }
+        }
     }
     return status;
 }
@@ -137,7 +137,7 @@ int main( int argc, char* argv[] )
     const double mflop_count = 2.0 * N * N * N / 1.0e6;
 
     printf( "Matrix-Matrix multiply (static arrays): Matrices are %dx%d\n",
-	    N, N );
+            N, N );
 
     /*
      * initialize matrices
@@ -145,11 +145,11 @@ int main( int argc, char* argv[] )
     srandom( (unsigned int) time( NULL ) );
     for ( i = 0; i < N; i++ )
     {
-	for ( j = 0; j < N; j++ )
-	{
-	    a[i][j] = (double) random() / RAND_MAX;
-	    b[i][j] = (double) random() / RAND_MAX;
-	}
+        for ( j = 0; j < N; j++ )
+        {
+            a[i][j] = (double) random() / RAND_MAX;
+            b[i][j] = (double) random() / RAND_MAX;
+        }
     }
 
     /*
@@ -183,8 +183,8 @@ int main( int argc, char* argv[] )
     printf( "------------------  ------------------  ------------------\n" );
     printf( "%10.6g sec%16.6g sec%16.6g sec\n", ijk_time, jki_time, ikj_time );
     printf( "%10.2f mflops %12.2f mflops %12.2f mflops\n",
-	    mflop_count / ijk_time, mflop_count / jki_time,
-	    mflop_count / ikj_time );
+            mflop_count / ijk_time, mflop_count / jki_time,
+            mflop_count / ikj_time );
 
     /*
      * verify products

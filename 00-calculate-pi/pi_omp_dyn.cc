@@ -28,7 +28,7 @@ double integrate( double a, double b, long n )
     for ( long i = 0; i < n; i++ )
     {
         double x = a + ( i + 0.5 ) * dx;
-	sum += 4.0 / ( 1.0 + x * x );
+        sum += 4.0 / ( 1.0 + x * x );
     }
     return sum * dx;
 }
@@ -54,18 +54,18 @@ int main( int argc, char* argv[] )
     t1 = omp_get_wtime();
     #pragma omp parallel default(shared) reduction (+:pi)
     {
-	double x0, x1;
-	int i;
-	#pragma omp critical
-	    i = section++;
-	while ( i <= numSections )
-	{
-	    x0 = a + subIntervalLength * ( i - 1 );
-	    x1 = a + subIntervalLength * i;
-	    pi += integrate( x0, x1, num_intervals / numSections );
-	    #pragma omp critical
-		i = section++;
-	}
+        double x0, x1;
+        int i;
+        #pragma omp critical
+            i = section++;
+        while ( i <= numSections )
+        {
+            x0 = a + subIntervalLength * ( i - 1 );
+            x1 = a + subIntervalLength * i;
+            pi += integrate( x0, x1, num_intervals / numSections );
+            #pragma omp critical
+                i = section++;
+        }
     }
     t2 = omp_get_wtime();
 
@@ -78,7 +78,7 @@ int main( int argc, char* argv[] )
     cout << "pi = " << pi;
     cout.precision( 4 );
     cout << " computed in " << t2 - t1 << " seconds; rate = "
-	 << gflops << " GFLOPS" << endl;
+         << gflops << " GFLOPS" << endl;
 
     // all done
 
