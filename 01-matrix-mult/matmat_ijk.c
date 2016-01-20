@@ -182,12 +182,13 @@ int main( int argc, char* argv[] )
     /*
      * initialize matrices
      */
+    srandom( (unsigned int) time( NULL ) );
     for ( i = 0; i < N; i++ )
     {
 	for ( j = 0; j < N; j++ )
 	{
-	    a[i][j] = 0.1 * ( ( 2 * (i+1) + 5 * (j+1) ) % 10 );
-	    b[i][j] = 0.1 * ( ( 4 * (i+1) + 3 * (j+1) ) % 10 );
+	    a[i][j] = (double) random() / RAND_MAX;
+	    b[i][j] = (double) random() / RAND_MAX;
 	}
     }
 
