@@ -18,8 +18,12 @@ BINS	= $(SRCS:.cc=) # replaces .cc extension with empty string
 all: $(BINS)
 
 # alternate targets used to clean up directory
-clean clobber:
-	$(RM) $(BINS) wtime.o
+clean:
+	$(RM) wtime.o
+
+clobber:
+	$(MAKE) clean
+	$(RM) $(BINS)
 
 # Explicit dependencies and adjustments to variables
 pi_serial:	pi_serial.cc wtime.o
