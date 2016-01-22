@@ -7,8 +7,10 @@
 # This file is released into the public domain.
 
 # Define variables
+CC	= gcc
+CFLAGS	= -Wall -02
 CXX	= g++
-CXXFLAGS= -Wall -O2
+CXXFLAGS= $(CFLAGS)
 
 # List of sources and files to build from them
 SRCS	= pi_serial.cc pi_omp.cc pi_omp_dyn.cc pi_mpi.cc
@@ -26,6 +28,7 @@ clobber:
 	$(RM) $(BINS)
 
 # Explicit dependencies and adjustments to variables
+pi_serial:	CXXFLAGS += -lrt
 pi_serial:	pi_serial.cc wtime.o
 
 pi_omp:		CXXFLAGS += -fopenmp
