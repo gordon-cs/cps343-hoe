@@ -8,7 +8,7 @@
 
 # Define variables
 CC	= gcc
-CFLAGS	= -Wall -02
+CFLAGS	= -Wall -O2
 CXX	= g++
 CXXFLAGS= $(CFLAGS)
 
