@@ -1,5 +1,5 @@
 /*
- * $Smake: gcc -o %F_opt %f; gcc -DARGS_REQUIRED -o %F_req %f
+ * $Smake: gcc -o %F %f; gcc -DARGS_REQUIRED -o %F_req %f
  *
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science

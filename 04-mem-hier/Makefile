@@ -16,7 +16,7 @@ CFLAGS	= -O3 -Wall -pedantic
 #
 # Executables produced by this Makefile
 #
-BINS = args_opt args_req matrix_prod
+BINS = args args_req matrix_prod
 
 #
 # Build targets
@@ -36,7 +36,7 @@ clean clobber:
 # source name minus extension.
 #
 args_req: CFLAGS += -DARGS_REQUIRED
-args_req args_opt: args.c
+args_req args: args.c
 	$(LINK.c) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #
