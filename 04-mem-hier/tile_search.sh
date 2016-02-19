@@ -24,7 +24,7 @@ then
     echo -e "\tMODE    is one of ijk, ikj, jik, jki, kij, kji"
     echo -e "\tNROWS   is the number of rows and columns of the result matrix"
     echo -e "\tNCOLS   is the number of columns in the first multiplicand"
-    echo -e "\tFACTOR  is the tile size growth factor: should be >1.05"
+    echo -e "\tFACTOR  is the tile size growth factor: (default is 1.3)"
     exit
 fi
 m=$1        # first argument is string of characters i, j, and k in any order
@@ -35,10 +35,9 @@ g=${g:-1.3} # default if g is empty is 1.3
 
 # loop over exponentially growing tile sizes.  Results are output in two
 # columns:
-#   tile_size_in_bytes       time_in_seconds
+#   tile_size    time_in_seconds
 #
 for ((ts=16; ts<=M*M; ts=$(mult_and_round $g $ts)))
 do
-    nbytes=$(echo $ts | awk '{print 8*$1}') # 8 bytes per double-prec value
-    echo "$nbytes $(matrix_prod -r $m $M $N $M $ts | awk '{print $4}')"
+    echo "$ts $(matrix_prod -r $m $M $N $M $ts | awk '{print $4}')"
 done
