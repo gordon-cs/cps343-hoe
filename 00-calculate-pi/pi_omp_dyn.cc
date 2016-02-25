@@ -57,14 +57,14 @@ int main( int argc, char* argv[] )
         double x0, x1;
         int i;
         #pragma omp critical
-            i = section++;
+        i = section++;
         while ( i <= numSections )
         {
             x0 = a + subIntervalLength * ( i - 1 );
             x1 = a + subIntervalLength * i;
             pi += integrate( x0, x1, num_intervals / numSections );
             #pragma omp critical
-                i = section++;
+            i = section++;
         }
     }
     t2 = omp_get_wtime();

@@ -1,23 +1,19 @@
 /*
- * $Smake: g++ -DN=1000 -Wall -O2 -o %F %f -lpthread -lrt
+ * $Smake: g++ -DN=1000 -Wall -O2 -o %F %f -lrt
  *
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science
  * Gordon College, 255 Grapevine Road, Wenham MA 01984-1899
  *
- * Benchmark serial and parallel matrix-matrix products.  The parallel
- * version uses pthreads. Threads access a shared variable to determine
- * which rows to compute.
+ * Benchmark serial and parallel matrix-matrix products (after modification).
+ * The parallel version should use OpenMP.
  */
 
 #include <cstdio>
 #include <cstdlib>
 #include <time.h>
-#include <pthread.h>
 
 using namespace std;
-
-#define MAX_THREADS 512
 
 #if !defined(N)
 # define N 1000  /* default matrix dimension */
@@ -32,9 +28,6 @@ double b[N][N];  /* matrix B */
 double c[N][N];  /* matrix C = A * B (serial product) */
 double d[N][N];  /* matrix D = A * B (parallel product */
 
-int nextRow = 0;
-pthread_mutex_t getRowMutex;
-
 //----------------------------------------------------------------------------
 // Returns the number of seconds since some fixed arbitrary time in the past.
 
@@ -46,33 +39,6 @@ double wtime( void )
 }
 
 //----------------------------------------------------------------------------
-// Compute the product of a range of rows in A with the matrix B
-
-void* rowsTimesCols( void* arg )
-{
-    int i;
-    while ( true )
-    {
-        pthread_mutex_lock( &getRowMutex );
-        i = nextRow++;
-        pthread_mutex_unlock( &getRowMutex );
-        if ( i >= N ) break;
-        for ( int j = 0; j < N; j++ )
-        {
-            d[i][j] = 0.0;
-        }
-        for ( int k = 0; k < N; k++ )
-        {
-            for ( int j = 0; j < N; j++ )
-            {
-                d[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
-    pthread_exit( NULL );
-}
-
-//----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
 int main( int argc, char* argv[] )
@@ -80,27 +46,10 @@ int main( int argc, char* argv[] )
     double t1, t2;
     double serial_time;
     double parallel_time;
-    int numberOfThreads;
-
-    if ( argc != 2 )
-    {
-        printf( "Usage: %s NUMBER_OF_THREADS\n", argv[0] );
-        return 0;
-    }
-
-    numberOfThreads = atoi( argv[1] );
-    if ( numberOfThreads <= 0 || numberOfThreads > MAX_THREADS )
-    {
-        fprintf( stderr,
-                 "Number of threads must be greater than 0 and less than %d\n",
-                 MAX_THREADS );
-        exit( EXIT_FAILURE );
-    }
 
     srandom( (unsigned int) time( NULL ) );
 
     printf( "Matrix-Matrix multiply: Matrices are %d x %d\n", N, N );
-    printf( "Dynamic thread assignment of %d threads\n", numberOfThreads );
 
     // initialize matrices
 
@@ -133,22 +82,25 @@ int main( int argc, char* argv[] )
     t2 = wtime();
     serial_time = t2 - t1;
 
-    // begin multithreaded product
+    //********************************************************************
+    //* Modify nested loops below so the computation is done in parallel *
+    //********************************************************************
 
     t1 = wtime();
-    pthread_t* threadID = new pthread_t [numberOfThreads];
-    for ( int n = 0; n < numberOfThreads; n++ )
+    for ( int i = 0; i < N; i++ )
     {
-        pthread_create( &threadID[n], NULL, rowsTimesCols, NULL );
+        for ( int j = 0; j < N; j++ )
+        {
+            d[i][j] = 0.0;
+        }
+        for ( int k = 0; k < N; k++ )
+        {
+            for ( int j = 0; j < N; j++ )
+            {
+                d[i][j] += a[i][k] * b[k][j];
+            }
+        }
     }
-
-    // wait for threads to finish
-
-    for ( int n = 0; n < numberOfThreads; n++ )
-    {
-        pthread_join( threadID[n], NULL );
-    }
-    delete [] threadID;
     t2 = wtime();
     parallel_time = t2 - t1;
 

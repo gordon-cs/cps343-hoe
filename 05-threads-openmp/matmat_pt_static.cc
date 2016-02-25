@@ -1,5 +1,5 @@
 /*
- * $Smake: g++ -DN=500 -Wall -O2 -o %F %f -lpthread -lrt
+ * $Smake: g++ -DN=1000 -Wall -O2 -o %F %f -lpthread -lrt
  *
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science
@@ -20,7 +20,7 @@ using namespace std;
 #define MAX_THREADS 512
 
 #if !defined(N)
-# define N 500  /* default matrix dimension */
+# define N 1000  /* default matrix dimension */
 #endif
 
 // Using static memory allocation.
@@ -63,7 +63,10 @@ void* rowsTimesCols( void* arg )
         for ( int j = 0; j < N; j++ )
         {
             d[i][j] = 0.0;
-            for ( int k = 0; k < N; k++ )
+        }
+        for ( int k = 0; k < N; k++ )
+        {
+            for ( int j = 0; j < N; j++ )
             {
                 d[i][j] += a[i][k] * b[k][j];
             }
@@ -79,7 +82,7 @@ int main( int argc, char* argv[] )
 {
     double t1, t2;
     double serial_time;
-    double multithreaded_time;
+    double parallel_time;
     int numberOfThreads;
 
     if ( argc != 2 )
@@ -87,10 +90,8 @@ int main( int argc, char* argv[] )
         printf( "Usage: %s NUMBER_OF_THREADS\n", argv[0] );
         return 0;
     }
-    else
-    {
-        numberOfThreads = atoi( argv[1] );
-    }
+
+    numberOfThreads = atoi( argv[1] );
     if ( numberOfThreads <= 0 || numberOfThreads > MAX_THREADS )
     {
         fprintf( stderr,
@@ -123,7 +124,10 @@ int main( int argc, char* argv[] )
         for ( int j = 0; j < N; j++ )
         {
             c[i][j] = 0.0;
-            for ( int k = 0; k < N; k++ )
+        }
+        for ( int k = 0; k < N; k++ )
+        {
+            for ( int j = 0; j < N; j++ )
             {
                 c[i][j] += a[i][k] * b[k][j];
             }
@@ -134,18 +138,9 @@ int main( int argc, char* argv[] )
 
     // begin multithreaded product
 
-    pthread_attr_t attr;
-    pthread_t threadID[numberOfThreads];
-    Rows row[numberOfThreads];
-
-    // set thread attributes
-
-    pthread_attr_init( &attr );
-    pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_JOINABLE );
-
-    // start threads
-
     t1 = wtime();
+    pthread_t* threadID = new pthread_t [numberOfThreads];
+    Rows* row = new Rows [numberOfThreads];
     for ( int n = 0; n < numberOfThreads; n++ )
     {
         row[n].start =     n     * N / numberOfThreads;
@@ -159,16 +154,16 @@ int main( int argc, char* argv[] )
     {
         pthread_join( threadID[n], NULL );
     }
+    delete [] row;
+    delete [] threadID;
     t2 = wtime();
-    multithreaded_time = t2 - t1;
+    parallel_time = t2 - t1;
 
-    pthread_attr_destroy( &attr );
-
-    printf( "   Serial Time     Multithreaded Time\n" );
+    printf( "   Serial Time        Parallel Time\n" );
     printf( "    (seconds)           (seconds)       Speedup\n" );
     printf( "------------------  ------------------  -------\n" );
     printf( "%12.6f        %12.6f    %10.3f\n", serial_time,
-            multithreaded_time, serial_time / multithreaded_time );
+            parallel_time, serial_time / parallel_time );
 
     // verify products; no output means the products match
 

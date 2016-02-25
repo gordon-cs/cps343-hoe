@@ -11,14 +11,20 @@
 #
 CC	= gcc
 CXX	= g++
-CFLAGS	= -O2 -Wall
+CFLAGS	= -O2 -Wall -pedantic
 CXXFLAGS= $(CFLAGS)
-LDLIBS	= -lpthread -lm
+LDLIBS	=
 
+#
+# Sources
+#
+SRCS	= thread.cc bounded-buffer.cc bank.cc matmat_pt_static.cc \
+		matmat_pt_dynamic.cc matmat_serial.cc \
+		helmholtz_jacobi.cc
 #
 # Build targets
 #
-BINS	= thread bounded-buffer bank matmat_pt_static matmat_pt_dynamic
+BINS	= $(SRCS:.cc=)
 OBJS	= randomInt.o
 
 .PHONY: all
@@ -32,12 +38,16 @@ clean clobber:
 	$(RM) $(BINS) $(OBJS)
 
 #
-# Dependencies for individual programs and objects
+# Non-default dependencies for individual programs and objects
 #
-thread:		thread.cc
-bounded-buffer:	bounded-buffer.cc
-bank:		bank.cc randomInt.o
-matmat_pt_static:	matmat_pt_static.cc
-matmat_pt_dynamic:	matmat_pt_dynamic.cc
-
 randomInt.o:	randomInt.cc randomInt.h
+bank:		bank.cc randomInt.o
+
+bank:			LDLIBS += -lpthread
+thread:			LDLIBS += -lpthread
+bounded-buffer:		LDLIBS += -lpthread
+matmat_pt_dynamic:	CXXFLAGS += -DN=1000
+matmat_pt_dynamic:	LDLIBS += -lpthread
+matmat_pt_static:	CXXFLAGS += -DN=1000
+matmat_pt_static:	LDLIBS += -lpthread
+

@@ -30,7 +30,7 @@ void initializeRandomInteger( int seed )
 {
     if ( seed < 0 )
     {
-	seed = (unsigned int) time( (time_t *) 0 );
+        seed = (unsigned int) time( (time_t *) 0 );
     }
     srandom( seed );
     initialized = true;
@@ -45,7 +45,7 @@ int getRandomInteger( int mean )
 {    
     if ( !initialized )
     {
-	initializeRandomInteger( -1 );
+        initializeRandomInteger( -1 );
     }
 
     // Random number from uniform distibution on [0,1)
