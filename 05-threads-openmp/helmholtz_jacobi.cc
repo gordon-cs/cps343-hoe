@@ -5,8 +5,8 @@
  *
  * $Smake: g++ -O2 -Wall -o %F %f
  *
- * To profile use "-O" and "-pg" on compiler command line:
- *     g++ -O -pg -o %F %f
+ * To profile add "-pg" to compiler command line and use "-O" instead of "-O2":
+ *     g++ -pg -O -Wall -o %F %f
  *
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science
@@ -66,81 +66,6 @@ void showGrid( double** v, int nx, int ny )
 double solution( double x, double y )
 {
     return cosh( x / 5.0 ) + cosh( y / 5.0 );
-}
-
-//----------------------------------------------------------------------------
-// Copy data from one array to another
-//
-// Input:
-//    double** v:  data array
-//    int nx:      number of grid points in x direction
-//    int ny:      number of grid points in y direction
-//
-// Output:
-//    double** u:  copy of data in v
-
-void gridCopy( double** u, double** v, int nx, int ny )
-{
-    for ( int i = 0; i < nx; i++ )
-    {
-        for ( int j = 0; j < ny; j++ )
-        {
-            u[i][j] = v[i][j];
-        }
-    }
-}
-
-//----------------------------------------------------------------------------
-// Computes actual L-infinity error norm between data in u and true solution
-// Of course, this is only possible if the true solution is known...
-//
-// Input:
-//    double** u:  data array
-//    double h:    grid spacing
-//    int nx:      number of grid points in x direction
-//    int ny:      number of grid points in y direction
-//
-// Returns:
-//    double:      sum_{i,j} | u(i,j)-uhat(i,j) |,  uhat is true solution
-
-double errorNorm( double** u, double h, int nx, int ny )
-{
-    double sum = 0.0;
-    for ( int i = 1; i < nx - 1; i++ )
-    {
-        double x = i * h;
-        for ( int j = 1; j < ny - 1; j++ )
-        {
-            double y = j * h;
-            sum += fabs( u[i][j] - solution( x, y ) );
-        }
-    }
-    return sum;
-}
-
-//----------------------------------------------------------------------------
-// Computes L-infinity norm between data in u and v.
-//
-// Input:
-//    double** u:  data array
-//    double** v:  second data array
-//    int nx:      number of grid points in x direction
-//    int ny:      number of grid points in y direction
-//
-// Returns:
-//    double:      sum_{i,j} | u(i,j)-v(i,j) |
-
-double diffNorm( double** u, double** v, int nx, int ny )
-{
-    double sum = 0.0;
-    for ( int i = 1; i < nx - 1; i++ )
-    {
-        for ( int j = 1; j < ny - 1; j++ )
-        {
-            sum += fabs( u[i][j] - v[i][j] );
-        }
-    }
-    return sum;
 }
 
 //----------------------------------------------------------------------------
@@ -219,6 +144,81 @@ void jacobiSweep( double** v, double** u, double f, double g, double h,
         for ( int j = 1; j < ny - 1; j++ )
         {
             v[i][j] = B * ( u[i][j-1] + u[i-1][j] + u[i][j+1] + u[i+1][j] - A );
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+// Computes actual L-infinity error norm between data in u and true solution
+// Of course, this is only possible if the true solution is known...
+//
+// Input:
+//    double** u:  data array
+//    double h:    grid spacing
+//    int nx:      number of grid points in x direction
+//    int ny:      number of grid points in y direction
+//
+// Returns:
+//    double:      sum_{i,j} | u(i,j)-uhat(i,j) |,  uhat is true solution
+
+double errorNorm( double** u, double h, int nx, int ny )
+{
+    double sum = 0.0;
+    for ( int i = 1; i < nx - 1; i++ )
+    {
+        double x = i * h;
+        for ( int j = 1; j < ny - 1; j++ )
+        {
+            double y = j * h;
+            sum += fabs( u[i][j] - solution( x, y ) );
+        }
+    }
+    return sum;
+}
+
+//----------------------------------------------------------------------------
+// Computes L-infinity norm between data in u and v.
+//
+// Input:
+//    double** u:  data array
+//    double** v:  second data array
+//    int nx:      number of grid points in x direction
+//    int ny:      number of grid points in y direction
+//
+// Returns:
+//    double:      sum_{i,j} | u(i,j)-v(i,j) |
+
+double diffNorm( double** u, double** v, int nx, int ny )
+{
+    double sum = 0.0;
+    for ( int i = 1; i < nx - 1; i++ )
+    {
+        for ( int j = 1; j < ny - 1; j++ )
+        {
+            sum += fabs( u[i][j] - v[i][j] );
+        }
+    }
+    return sum;
+}
+
+//----------------------------------------------------------------------------
+// Copy data from one array to another
+//
+// Input:
+//    double** v:  data array
+//    int nx:      number of grid points in x direction
+//    int ny:      number of grid points in y direction
+//
+// Output:
+//    double** u:  copy of data in v
+
+void gridCopy( double** u, double** v, int nx, int ny )
+{
+    for ( int i = 0; i < nx; i++ )
+    {
+        for ( int j = 0; j < ny; j++ )
+        {
+            u[i][j] = v[i][j];
         }
     }
 }
