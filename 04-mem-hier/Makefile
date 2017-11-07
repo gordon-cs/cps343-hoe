@@ -42,11 +42,10 @@ args_req args: args.c
 #
 # Determine if BLAS (ATLAS BLAS or OpenBLAS) are available
 #
-ifneq (,$(findstring blas,$(LMOD_FAMILY_BLAS)))
+ifneq (,$(findstring atlas,$(LMOD_FAMILY_BLAS)))
   matrix_prod:	CFLAGS += -DHAVE_BLAS
-  ifneq (,$(findstring atlas,$(LMOD_FAMILY_BLAS)))
-    matrix_prod:	LDLIBS += -lf77blas -lsatlas -lgfortran
-  else ifneq (,$(findstring openblas,$(LMOD_FAMILY_BLAS)))
-    matrix_prod:	LDLIBS += -lopenblas
-  endif
+  matrix_prod:	LDLIBS += -lf77blas -lsatlas -lgfortran
+else ifneq (,$(findstring openblas,$(LMOD_FAMILY_BLAS)))
+  matrix_prod:	CFLAGS += -DHAVE_BLAS
+  matrix_prod:	LDLIBS += -lopenblas
 endif
