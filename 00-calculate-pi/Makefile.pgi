@@ -7,13 +7,10 @@
 # This file is released into the public domain.
 
 # Define variables
-CC	= gcc
-CFLAGS	= -Wall -O3 -funroll-loops
-CXX	= g++
+CC	= pgcc
+CFLAGS	= -fast
+CXX	= pgc++
 CXXFLAGS= $(CFLAGS)
-MPICC	= mpicc
-MPICXX	= mpic++
-OMP_FLAG= -fopenmp
 
 # List of sources and files to build from them
 SRCS	= pi_serial.cc pi_omp.cc pi_omp_dyn.cc pi_mpi.cc
@@ -34,13 +31,13 @@ clobber:
 # Explicit dependencies and adjustments to variables
 pi_serial:	pi_serial.cc wtime.o
 
-pi_omp:		CXXFLAGS += $(OMP_FLAG)
+pi_omp:		CXXFLAGS += -mp=allcores
 pi_omp:		pi_omp.cc
 
-pi_omp_dyn:	CXXFLAGS += $(OMP_FLAG)
+pi_omp_dyn:	CXXFLAGS += -mp=allcores
 pi_omp_dyn:	pi_omp_dyn.cc
 
-pi_mpi:		CXX = $(MPICXX)
+pi_mpi:		CXX = mpic++
 pi_mpi:		pi_mpi.cc
 
 wtime.o:	wtime.c wtime.h
