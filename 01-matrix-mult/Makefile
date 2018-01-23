@@ -39,16 +39,12 @@ matmat_f95: matmat_f95.f
 #
 # C programs need librt for timing
 #
-matmat_c1: LDLIBS += -lrt
 matmat_c1: matmat_c1.c
 
-matmat_c2: LDLIBS += -lrt
 matmat_c2: matmat_c2.c
 
-matmat_c3: LDLIBS += -lrt
 matmat_c3: matmat_c3.c
 
-matmat_ijk: LDLIBS += -lrt
 matmat_ijk: matmat_ijk.c
 
 #
@@ -56,11 +52,9 @@ matmat_ijk: matmat_ijk.c
 # name does not match source name minus extension.
 #
 timing_1D: CXXFLAGS += -DUSE_MACRO
-timing_1D: LDLIBS += -lrt
 timing_1D: timing.cc
 	$(LINK.C) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-timing_2D: LDLIBS += -lrt
 timing_2D: timing.cc
 	$(LINK.C) $^ $(LOADLIBES) $(LDLIBS) -o $@
 

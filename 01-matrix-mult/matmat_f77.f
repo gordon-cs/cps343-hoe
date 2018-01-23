@@ -19,22 +19,33 @@ C23456789012345678901234567890123456789012345678901234567890123456789012
       DOUBLE PRECISION C1(N,N),C2(N,N),C3(N,N)
       INTEGER ICMPPR
       INTEGER I,J
+      INTEGER M,P,X
       REAL T1,T2
       REAL TIMIJK,TIMJKI,TIMIKJ
       REAL TARRAY(2),ETIME
-c      REAL RAND
+C      REAL RAND
 C
       WRITE(*,10) N,N
  10   FORMAT(1X,'MATRIX-MATRIX MULTIPLY: MATRICES ARE ',I5,' X',I5)
 C
 C     INITIALIZE MATRICES
 C
+      M=16807
+      P=2147483647
+      X=42
       DO 30 J=1,N
          DO 20 I=1,N
-            A(I,J)=RAND(0)
-            B(i,J)=RAND(0)
+C            A(I,J)=RAND(0)
+C            B(i,J)=RAND(0)
+            X=MOD(M*X,P)
+            A(I,J)=1.*X/P
+            X=MOD(M*X,P)
+            B(I,J)=1.*X/P
+C            WRITE(*,32) A(I,J),B(I,J)
  20      CONTINUE
  30   CONTINUE
+C 32   FORMAT(1X,'A=',F10.2,' B=',F10.2)
+
 C
 C     IJK PRODUCT
 C
@@ -73,14 +84,21 @@ C     COMPARE PRODUCTS
 C
       IF (ICMPPR(C1,C2,N).GT.0) THEN
          WRITE(*,80) 1,2
+      ELSE
+         WRITE(*,90) 1,2
       ENDIF
       IF (ICMPPR(C1,C3,N).GT.0) THEN
          WRITE(*,80) 1,3
+      ELSE
+         WRITE(*,90) 1,3
       ENDIF
       IF (ICMPPR(C2,C3,N).GT.0) THEN
          WRITE(*,80) 2,3
+      ELSE
+         WRITE(*,90) 2,3
       ENDIF
- 80   FORMAT(1X,'VALIDATION ERROR: C',I1,' /= C',I1)
+ 80   FORMAT(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')
+ 90   FORMAT(1X,'C',I1,' /= C',I1,': OKAY')
 C
 C     ALL DONE
 C
@@ -152,19 +170,21 @@ C
       INTEGER FUNCTION ICMPPR(C,D,N)
       INTEGER N
       DOUBLE PRECISION C(N,N),D(N,N)
+      DOUBLE PRECISION EPS
       INTEGER ICOUNT
       ICOUNT=0
+      EPS=1.0E-14
       DO 20 I=1,N
          DO 10 J=1,N
-            IF (C(I,J).NE.D(I,J)) THEN
+            IF (ABS(C(I,J)-D(I,J)).GT.EPS) THEN
                ICOUNT=ICOUNT+1
-               WRITE(*,30)
-               WRITE(*,40) I,J,C(I,J),D(I,J)
+C               WRITE(*,30)
+C               WRITE(*,40) I,J,C(I,J),D(I,J),C(I,J)-D(I,J)
             ENDIF
  10      CONTINUE
  20   CONTINUE
       ICMPPR=ICOUNT
- 30   FORMAT(1X,'****ERROR****')
- 40   FORMAT(1X,'(',I3,',',I3,'): ',F15.5,' /= ',F15.5)
+C 30   FORMAT(1X,'****ERROR****')
+C 40   FORMAT(1X,'(',I3,',',I3,'): ',F15.5,' /= ',F15.5,' Diff = ',E15.5)
       RETURN
       END

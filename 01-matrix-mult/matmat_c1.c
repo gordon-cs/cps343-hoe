@@ -20,6 +20,8 @@
 # define N 500  /* default matrix dimension */
 #endif
 
+const double EPSILON = 1.0E-14;
+
 /*
  * using static memory allocation --
  * arrays are global so they will not be allocated on stack
@@ -115,7 +117,7 @@ int verify( double c[N][N], double d[N][N], int n )
     {
         for ( j = 0; j < n; j++ )
         {
-            if ( c[i][j] != d[i][j] )
+            if ( fabs( c[i][j] - d[i][j] ) > EPSILON )
             {
                 status++;
                 printf( "[%d][%d]: c = %f; d = %f\n", i, j, c[i][j], d[i][j] );
