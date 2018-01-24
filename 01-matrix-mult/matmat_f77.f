@@ -98,7 +98,7 @@ C
          WRITE(*,90) 2,3
       ENDIF
  80   FORMAT(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')
- 90   FORMAT(1X,'C',I1,' /= C',I1,': OKAY')
+ 90   FORMAT(1X,'C',I1,'  = C',I1,': OKAY')
 C
 C     ALL DONE
 C

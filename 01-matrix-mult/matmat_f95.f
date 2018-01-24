@@ -69,17 +69,17 @@ C
       IF (ICMPPR(C1,C2,N).GT.0) THEN
          WRITE(*,"(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')") 1,2
       ELSE
-         WRITE(*,"(1X,'C',I1,' == C',I1,': OKAY')") 1,2
+         WRITE(*,"(1X,'C',I1,'  = C',I1,': OKAY')") 1,2
       ENDIF
       IF (ICMPPR(C1,C3,N).GT.0) THEN
          WRITE(*,"(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')") 1,3
       ELSE
-         WRITE(*,"(1X,'C',I1,' == C',I1,': OKAY')") 1,3
+         WRITE(*,"(1X,'C',I1,'  = C',I1,': OKAY')") 1,3
       ENDIF
       IF (ICMPPR(C2,C3,N).GT.0) THEN
          WRITE(*,"(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')") 2,3
       ELSE
-         WRITE(*,"(1X,'C',I1,' == C',I1,': OKAY')") 2,3
+         WRITE(*,"(1X,'C',I1,'  = C',I1,': OKAY')") 2,3
       ENDIF
 C
 C     ALL DONE
