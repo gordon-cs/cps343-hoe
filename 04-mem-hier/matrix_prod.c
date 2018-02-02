@@ -16,8 +16,9 @@
  *     Standard tiling  - product using predetermined tiles
  *     Recursive tiling - product using recursively determined matrix tiles
  *     BLAS             - uses BLAS routine DGEMM
- * All versions except BLAS can be carried out with one of the "ijk"
- * loop-order forms.
+ *     CBLAS            - uses CBLAS routine cblas_dgemm
+ * All versions except BLAS and CBLAS can be carried out with a particular
+ * one of the "ijk" loop-order forms.
  *
  * Running the naive version:
  *     matrix_prod -n <ijk> <M> <P> <N>
@@ -40,6 +41,11 @@
  *     matrix_prod -b <M> <P> <N>
  *   Example:
  *     matrix_prod -b 1000 500 1000
+ *
+ * Running the CBLAS version:
+ *     matrix_prod -c <M> <P> <N>
+ *   Example:
+ *     matrix_prod -c 1000 500 1000
  */
 
 #include <stdio.h>
@@ -49,11 +55,12 @@
 #include <time.h>
 
 enum {
-    MODE_UNKNOWN, MODE_BLAS, MODE_NAIVE, MODE_RECURSIVE_TILE, MODE_STD_TILE
+    MODE_UNKNOWN, MODE_BLAS, MODE_CBLAS, MODE_NAIVE, MODE_RECURSIVE_TILE,
+    MODE_STD_TILE
 };
 
 void (*do_product)( double**, double**, double**, int, int,
-                 int, int, int, int ) = NULL;
+                    int, int, int, int ) = NULL;
 
 #if defined(HAVE_BLAS)
 /* Prototype of Fortran BLAS routine DGEMM */
@@ -73,6 +80,14 @@ void dgemm( char transa, char transb, int m, int n, int k, double alpha,
     dgemm_( &transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta,
             c, &ldc );
 }
+#endif
+
+#if defined(HAVE_CBLAS)
+#include <cblas.h>
+#endif
+
+#if defined(HAVE_GSL_CBLAS)
+#include <gsl/gsl_cblas.h>
 #endif
 
 /*---------------------------------------------------------------------------
@@ -485,6 +500,76 @@ double multiply_by_blas( int argc, char* argv[], int verbosity )
 }
 #endif
 
+#if defined(HAVE_CBLAS) || defined(HAVE_GSL_CBLAS)
+/*---------------------------------------------------------------------------
+ *
+ * Compute matrix product using BLAS routine DGEMM.
+ *
+ * Input
+ *   int argc        - length of argv[] array
+ *   char* argv[]    - pointer to command line parameter array
+ *   int verbosity   - program verification: verbosity > 0 gives more output
+ *
+ * Output
+ *   double          - elapsed time for product computation
+ */
+double multiply_by_cblas( int argc, char* argv[], int verbosity )
+{
+    int rows, cols, mids;
+    double **a, **b, **c;
+    double t1, t2;
+    double sec;
+    double gflop_count;
+
+    /*
+     * process command line arguments
+     */
+    rows = atoi( argv[0] );
+    mids = atoi( argv[1] );
+    cols = atoi( argv[2] );
+    gflop_count = 2.0 * rows * mids * cols / 1.0e9;
+
+    if ( verbosity > 0 )
+    {
+        printf( "CBLAS: rows = %d, mids = %d, columns = %d\n",
+                rows, mids, cols );
+    }
+
+    /*
+     * allocate and initialize matrices
+     */
+    a = (double**) allocateMatrix( rows, mids );
+    b = (double**) allocateMatrix( mids, cols );
+    c = (double**) allocateMatrix( rows, cols );
+    initialize_matrices( a, b, c, rows, cols, mids, verbosity );
+
+    /*
+     * compute product
+     */
+    t1 = wtime();
+    cblas_dgemm( CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                 rows, cols, mids, 1.0, &a[0][0], mids, &b[0][0], cols,
+                 0.0, &c[0][0], cols );
+    t2 = wtime();
+    sec = t2 - t1;
+
+    if ( verbosity > 1 )
+        printf( "checksum = %f\n", checksum( c, rows, cols ) );
+
+    printf( "CBLAS:       %6.3f secs %6.3f gflops ( %5d x %5d x %5d )\n",
+            sec, gflop_count / sec, rows, mids, cols );
+
+    /*
+     * clean up
+     */
+    deallocateMatrix( a );
+    deallocateMatrix( b );
+    deallocateMatrix( c );
+
+    return t2 - t1;
+}
+#endif
+
 /*---------------------------------------------------------------------------
  *
  * Compute matrix product using naive triple-nested loops.
@@ -732,19 +817,28 @@ int main( int argc, char* argv[] )
     char order[4];
 
     /*
-     * process command line to determine solution method
+     * process command line to determine solution method.  Begin by
+     * constructing option string for getopt() depending on available
+     * libraries.
      */
+    const char* optstring =
 #if defined(HAVE_BLAS)
-    const char* optstring = "bn:r:t:v";
-#else
-    const char* optstring = "n:r:t:v";
+        "b"
 #endif
+#if defined(HAVE_CBLAS) || defined(HAVE_GSL_CBLAS)
+        "c"
+#endif
+        "bn:r:t:v";
+
     while ( ( c = getopt( argc, argv, optstring ) ) != -1 )
     {
         switch ( c )
         {
             case 'b':
                 mode = MODE_BLAS;
+                break;
+            case 'c':
+                mode = MODE_CBLAS;
                 break;
             case 'n':
                 mode = MODE_NAIVE;
@@ -784,6 +878,10 @@ int main( int argc, char* argv[] )
         fprintf( stderr, "  %s -b M P N                  (BLAS)\n",
             pname );
 #endif
+#if defined(HAVE_CBLAS) || defined(HAVE_GSL_CBLAS)
+        fprintf( stderr, "  %s -c M P N                  (CBLAS)\n",
+            pname );
+#endif
         fprintf( stderr, "\nThe product is MxN, factors are MxP and PxN, " );
         fprintf( stderr, "and 'ijk' may be replace by\n" );
         fprintf( stderr, "any permution of 'i', 'j', and 'k'.\n\n" );
@@ -797,7 +895,7 @@ int main( int argc, char* argv[] )
      * unless we're using the BLAS we need to set do_function() to be
      * the function that uses the desired ordering.
      */
-    if ( mode != MODE_BLAS )
+    if ( mode != MODE_BLAS && mode != MODE_CBLAS )
     {
         if ( strncmp( order, "ijk", 3 ) == 0 ) do_product = do_ijk_product;
         if ( strncmp( order, "ikj", 3 ) == 0 ) do_product = do_ikj_product;
@@ -826,6 +924,16 @@ int main( int argc, char* argv[] )
                 exit( EXIT_FAILURE );
             }
             multiply_by_blas( argc, argv, verbosity );
+            break;
+#endif
+#if defined(HAVE_CBLAS) || defined(HAVE_GSL_CBLAS)
+        case MODE_CBLAS:
+            if ( argc < 3 )
+            {
+                fprintf( stderr, "usage: %s -c ROWS MIDS COLS\n", pname );
+                exit( EXIT_FAILURE );
+            }
+            multiply_by_cblas( argc, argv, verbosity );
             break;
 #endif
         case MODE_NAIVE:
