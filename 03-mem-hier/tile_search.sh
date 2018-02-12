@@ -39,5 +39,5 @@ g=${g:-1.3} # default if g is empty is 1.3
 #
 for ((ts=36; ts<=M*M; ts=$(mult_and_round $g $ts)))
 do
-    echo "$ts $(matrix_prod -r $m $M $N $M $ts | awk '{print $4}')"
+    echo "$ts $(./matrix_prod -r $m $M $N $M $ts | awk '{print $4}')"
 done
