@@ -18,8 +18,8 @@ LDLIBS	=
 #
 # Sources
 #
-SRCS	= thread.cc bounded-buffer.cc bank.cc matmat_pt_static.cc \
-		matmat_pt_dynamic.cc matmat_serial.cc \
+SRCS	= thread.cc thread-c++11.cc bounded-buffer.cc \
+		matmat_pt_static.cc matmat_pt_dynamic.cc matmat_serial.cc \
 		helmholtz_jacobi.cc
 #
 # Build targets
@@ -40,14 +40,10 @@ clean clobber:
 #
 # Non-default dependencies for individual programs and objects
 #
-randomInt.o:	randomInt.cc randomInt.h
-bank:		bank.cc randomInt.o
+randomInt.o:		randomInt.cc randomInt.h
 
-bank:			LDLIBS += -lpthread
-thread:			LDLIBS += -lpthread
-bounded-buffer:		LDLIBS += -lpthread
-matmat_pt_dynamic:	CXXFLAGS += -DN=1000
-matmat_pt_dynamic:	LDLIBS += -lpthread
-matmat_pt_static:	CXXFLAGS += -DN=1000
-matmat_pt_static:	LDLIBS += -lpthread
-
+thread:			CXXFLAGS += -pthread
+thread-c++11:		CXXFLAGS += -std=c++11 -pthread
+bounded-buffer:		CXXFLAGS += -pthread
+matmat_pt_dynamic:	CXXFLAGS += -DN=1000 -pthread
+matmat_pt_static:	CXXFLAGS += -DN=1000 -pthread

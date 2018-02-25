@@ -1,3 +1,4 @@
+bank.cc
 matmat_omp.cc
 matmat_omp_dyn.cc
 helmholtz_jacobi_omp.cc
@@ -10,3 +11,4 @@ matmat_pt_dynamic
 matmat_pt_static
 matmat_serial
 thread
+thread-c++11
