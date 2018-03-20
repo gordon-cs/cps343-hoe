@@ -443,7 +443,7 @@ int main( int argc, char *argv[] )
 
     // Set iteration parameters
 
-    const long maxIter = 10 * nx * ny; // max number of Jacobi iterations
+    const long maxIter = 10 * NX * NY; // max number of Jacobi iterations
     const double tolerance = 1e-6;     // bound on inf-norm of consecutive solns
 
     // Perform Jacobi iterations
@@ -484,8 +484,7 @@ int main( int argc, char *argv[] )
     if ( rank > 0 )
     {
         // wait for next lower rank process to send to me
-        MPI_Recv( &junk, 1, MPI_INT, rank - 1, 99, c2d,
-                  MPI_STATUS_IGNORE );
+        MPI_Recv( &junk, 1, MPI_INT, rank - 1, 99, c2d, MPI_STATUS_IGNORE );
     }
     showGrid( u, nx, ny );
     if ( rank < numberOfProcesses - 1 )
