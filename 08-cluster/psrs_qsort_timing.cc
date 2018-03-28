@@ -1,5 +1,5 @@
 /*
- * $Smake: mpic++ -Wall -O2 -o %F %f
+ * $Smake: mpic++ -DSHOW_TIMING_DATA -Wall -O2 -o %F %f
  *
  * Copyright (c) 2010 Jonathan Senning <jonathan.senning@gordon.edu.
  * Department of Mathematics and Computer Science
@@ -16,7 +16,7 @@
 #include <cstdlib>
 #include <mpi.h>
 
-#define SHOW_TIMING_DATA
+//#define SHOW_TIMING_DATA
 
 //----------------------------------------------------------------------------
 //
