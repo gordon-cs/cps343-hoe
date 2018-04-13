@@ -1,4 +1,4 @@
-// $Smake: nvcc -arch=sm_21 -O2 -o %F %f wtime.c -lrt
+// $Smake: nvcc -Xptxas -v -arch=sm_30 -O2 -o %F %f wtime.c
 
 #include <cstdio>
 #include <cuda.h>
@@ -6,7 +6,12 @@
 
 #define IDX(i,j,n) ((i)*(n)+j)
 
+#if !defined(BS)
 const int BlockSize = 16;
+#else
+const int BlockSize = BS;  // normally 64 or less
+#endif
+
 const int MaxSizeToDisplay = 25;
 
 typedef float FLOAT;
@@ -167,7 +172,7 @@ int main( int argc, char* argv[] )
     float global_time_ms;
     cudaEventElapsedTime( &global_time_ms, event0, event1 );
     double global_wall_time = t1 - t0;
-    printf( "Global kernel time = %f sec, elapsed wall time = %f sec\n",
+    printf( "Global kernel time = %e sec, elapsed wall time = %e sec\n",
 	    global_time_ms / 1000.0, global_wall_time );
 
     // Compute product using shared-memory kernel
@@ -189,7 +194,7 @@ int main( int argc, char* argv[] )
     float shared_time_ms;
     cudaEventElapsedTime( &shared_time_ms, event0, event1 );
     double shared_wall_time = t1 - t0;
-    printf( "Shared kernel time = %f sec, elapsed wall time = %f sec\n",
+    printf( "Shared kernel time = %e sec, elapsed wall time = %e sec\n",
 	    shared_time_ms / 1000.0, shared_wall_time );
     printf( "Device speedup = %6.2f, Wall clock speedup = %6.2f\n",
 	    global_time_ms / shared_time_ms,
