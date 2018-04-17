@@ -1,11 +1,47 @@
-matmul:	matmul.cu wtime.o wtime.h
-	nvcc -Xptxas -v -arch=sm_30 -O2 -o matmul matmul.cu wtime.o
+# Makefile for serial and parallel pi computation examples
+#
+# Jonathan Senning <jonathan.senning@gordon.edu>
+# Department of Mathematics and Computer Science
+# Gordon College, 255 Grapevine Road, Wenham MA 01984-1899
+#
+# This file is released into the public domain.
 
-matmul.big:	matmul.cu wtime.o wtime.h
-	nvcc -DBS=32 -Xptxas -v -arch=sm_30 -O2 -o matmul.big matmul.cu wtime.o
+# Define variables
+CC	:= gcc
+NVCC	:= nvcc
+OPTFLAGS:= -O2
+NVFLAGS	:= -Xptxas -v -arch=sm_30
+CFLAGS	:= $(OPTFLAGS)
 
-wtime.o: wtime.c wtime.h
-	gcc -c -O2 -o wtime.o wtime.c
+# List of sources and files to build from them
+CUSRCS	= matmul.cu
+BINS	= matmul08 matmul16 matmul32
 
-clean clobber:
-	rm -f matmul wtime.o
+# First (default) target
+all: $(BINS)
+
+# alternate targets used to clean up directory
+# (pi_serial.o is created by PGI compiler)
+clean:
+	$(RM) wtime.o
+
+clobber:
+	$(MAKE) clean
+	$(RM) $(BINS)
+
+# Explicit dependencies and adjustments to variables
+matmul08:	CFLAGS += -DBS=8
+matmul08:	matmul.cu wtime.o
+	$(NVCC) $(NVFLAGS) $(CFLAGS) $^ -o $@
+
+matmul16:	CFLAGS += -DBS=16
+matmul16:	matmul.cu wtime.o
+	$(NVCC) $(NVFLAGS) $(CFLAGS) $^ -o $@
+
+matmul32:	CFLAGS += -DBS=32
+matmul32:	matmul.cu wtime.o
+	$(NVCC) $(NVFLAGS) $(CFLAGS) $^ -o $@
+
+wtime.o:	CC = gcc
+wtime.o:	CFLAGS = $(OPTFLAGS)
+wtime.o:	wtime.c wtime.h

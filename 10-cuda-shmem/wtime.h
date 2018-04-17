@@ -2,11 +2,12 @@
 #define __WTIME_H__
 
 /*
- * Prototype function that returns the number of seconds since some
- * fixed arbitrary time in the past.  Resolution varies depending on
- * what functions are available during compilation.  If POSIX timers
- * are available timer should have an accuracy of about 1 nanosecond,
- * otherwise the resolution will only be about 10 milliseconds.
+ * Prototype function that returns the number of seconds since a fixed
+ * arbitrary time in the past.  Resolution varies depending on what
+ * functions are available during compilation.  If MACH or POSIX timers
+ * are available the timer should have an accuracy of about 1 nanosecond.
+ * In a WIN32 environment the accuracy should be about 1 microsecond.
+ * Otherwise the resolution will only be about 10 milliseconds.
  *
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science
