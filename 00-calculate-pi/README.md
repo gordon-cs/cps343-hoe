@@ -2,9 +2,7 @@ Compiling the programs
 ======================
 
 All the programs in this directory can be compiled by typing 
-```shell
-make
-```
+`make`
 at the command prompt.
 
 Description and instructions
