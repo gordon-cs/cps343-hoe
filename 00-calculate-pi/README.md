@@ -1,14 +1,14 @@
-------------------------------------------------------------------------------
 Compiling the programs
-------------------------------------------------------------------------------
+======================
 
 All the programs in this directory can be compiled by typing 
-    make
+```shell
+make
+```
 at the command prompt.
 
-------------------------------------------------------------------------------
 Description and instructions
-------------------------------------------------------------------------------
+============================
 
 pi_serial.cc	This program computes an approximation of pi using a serial
 		algorithm.  The actual computation is done by approximating
