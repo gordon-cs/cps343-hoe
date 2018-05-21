@@ -7,16 +7,28 @@
 #
 # This file is released into the public domain.
 
-GNUFLAGS= -Wall -O3
+# Determine if PGI C compiler is available.  If so, we assume we want to
+# compile programs using the PGI compiler suite.
+PGCC    := $(shell which pgcc 2> /dev/null)
 
-FC	= gfortran
-FFLAGS	= $(GNUFLAGS)
-
-CC	= gcc
-CFLAGS	= $(GNUFLAGS)
-
-CXX	= g++
-CXXFLAGS= $(GNUFLAGS)
+# Define variables
+ifdef PGCC
+        CC      = pgcc
+        CXX     = pgc++
+	FC	= pgfortran
+	F77	= pgf77
+	F95	= pgf95
+        CFLAGS  = -fast
+else
+        CC      = gcc
+        CXX     = g++
+	FC	= gfortran
+	F77	= gfortran -std=legacy
+	F95	= gfortran -std=f95
+        CFLAGS  = -Wall -O3 -funroll-loops
+endif
+CXXFLAGS= $(CFLAGS)
+FFLAGS	= $(CFLAGS)
 
 BINS = matmat_f77 matmat_f95 matmat_c1 matmat_c2 matmat_c3 matmat_ijk \
 	timing_1D timing_2D
@@ -30,15 +42,12 @@ all: $(BINS)
 #
 # Include compiler flags to coax gfortran to behaving like F77 or F95
 #
-matmat_f77: FFLAGS += -std=legacy
+matmat_f77: FC = $(F77)
 matmat_f77: matmat_f77.f
 
-matmat_f95: FFLAGS += -std=f95
+matmat_f95: FC = $(F95)
 matmat_f95: matmat_f95.f
 
-#
-# C programs need librt for timing
-#
 matmat_c1: matmat_c1.c
 
 matmat_c2: matmat_c2.c
@@ -48,15 +57,15 @@ matmat_c3: matmat_c3.c
 matmat_ijk: matmat_ijk.c
 
 #
-# C++ needs librt for timing.  LINK.C command explicitly listed since target
-# name does not match source name minus extension.
+# LINK.c command explicitly listed since target name does not match
+# source name minus extension.
 #
-timing_1D: CXXFLAGS += -DUSE_MACRO
-timing_1D: timing.cc
-	$(LINK.C) $^ $(LOADLIBES) $(LDLIBS) -o $@
+timing_1D: CFLAGS += -DUSE_MACRO
+timing_1D: timing.c
+	$(LINK.c) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-timing_2D: timing.cc
-	$(LINK.C) $^ $(LOADLIBES) $(LDLIBS) -o $@
+timing_2D: timing.c
+	$(LINK.c) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #
 # Targets for cleaning up

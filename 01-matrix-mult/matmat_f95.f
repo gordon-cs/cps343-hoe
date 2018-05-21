@@ -68,18 +68,12 @@ C     COMPARE PRODUCTS
 C
       IF (ICMPPR(C1,C2,N).GT.0) THEN
          WRITE(*,"(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')") 1,2
-      ELSE
-         WRITE(*,"(1X,'C',I1,'  = C',I1,': OKAY')") 1,2
       ENDIF
       IF (ICMPPR(C1,C3,N).GT.0) THEN
          WRITE(*,"(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')") 1,3
-      ELSE
-         WRITE(*,"(1X,'C',I1,'  = C',I1,': OKAY')") 1,3
       ENDIF
       IF (ICMPPR(C2,C3,N).GT.0) THEN
          WRITE(*,"(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')") 2,3
-      ELSE
-         WRITE(*,"(1X,'C',I1,'  = C',I1,': OKAY')") 2,3
       ENDIF
 C
 C     ALL DONE
@@ -154,14 +148,14 @@ C
       DOUBLE PRECISION EPS
       INTEGER ICOUNT
       ICOUNT=0
-      EPS=2.0E-13
+      EPS=1.0E-12
       DO I=1,N
          DO J=1,N
             IF (ABS(C(I,J)-D(I,J))>EPS) THEN
                ICOUNT=ICOUNT+1
-C               WRITE (*,*) '****WARNING****'
-C               WRITE (*,"(1X,'(',I3,',',I3,'): ',F15.5,' <> ',F15.5)")
-C     +              I,J,C(I,J),D(I,J)
+               WRITE (*,*) '****WARNING****'
+               WRITE (*,"(1X,'(',I3,',',I3,'): ',F15.5,' <> ',F15.5)")
+     +              I,J,C(I,J),D(I,J)
             ENDIF
          END DO
       END DO

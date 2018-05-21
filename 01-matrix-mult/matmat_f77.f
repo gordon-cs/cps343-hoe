@@ -84,21 +84,14 @@ C     COMPARE PRODUCTS
 C
       IF (ICMPPR(C1,C2,N).GT.0) THEN
          WRITE(*,80) 1,2
-      ELSE
-         WRITE(*,90) 1,2
       ENDIF
       IF (ICMPPR(C1,C3,N).GT.0) THEN
          WRITE(*,80) 1,3
-      ELSE
-         WRITE(*,90) 1,3
       ENDIF
       IF (ICMPPR(C2,C3,N).GT.0) THEN
          WRITE(*,80) 2,3
-      ELSE
-         WRITE(*,90) 2,3
       ENDIF
  80   FORMAT(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')
- 90   FORMAT(1X,'C',I1,'  = C',I1,': OKAY')
 C
 C     ALL DONE
 C
@@ -173,18 +166,18 @@ C
       DOUBLE PRECISION EPS
       INTEGER ICOUNT
       ICOUNT=0
-      EPS=1.0E-14
+      EPS=1.0E-12
       DO 20 I=1,N
          DO 10 J=1,N
             IF (ABS(C(I,J)-D(I,J)).GT.EPS) THEN
                ICOUNT=ICOUNT+1
-C               WRITE(*,30)
-C               WRITE(*,40) I,J,C(I,J),D(I,J),C(I,J)-D(I,J)
+               WRITE(*,30)
+               WRITE(*,40) I,J,C(I,J),D(I,J),C(I,J)-D(I,J)
             ENDIF
  10      CONTINUE
  20   CONTINUE
       ICMPPR=ICOUNT
-C 30   FORMAT(1X,'****ERROR****')
-C 40   FORMAT(1X,'(',I3,',',I3,'): ',F15.5,' /= ',F15.5,' Diff = ',E15.5)
+ 30   FORMAT(1X,'****ERROR****')
+ 40   FORMAT(1X,'(',I3,',',I3,'): ',F15.5,' /= ',F15.5,' Diff = ',E15.5)
       RETURN
       END

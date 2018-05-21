@@ -1,5 +1,5 @@
 /*
- * $Smake: g++ -O2 -o %F_2D %f -lrt; g++ -DUSE_MACRO -O2 -o %F_1D %f -lrt
+ * $Smake: gcc -O2 -o %F_2D %f -lrt; g++ -DUSE_MACRO -O2 -o %F_1D %f -lrt
  *
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science
@@ -24,51 +24,54 @@
  *
  */
 
-#include <iostream>
-#include <iomanip>
-#include <cstdlib>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
-
-using namespace std;
 
 #if !defined(N)
 # define N 1000
 #endif
 
 #if defined(USE_MACRO)
-# define idx(i,j,rowlen) ((i)*(rowlen)+j)
+# define IDX(row,col,stride) ((row)*(stride)+(col))
 #endif
 
-//----------------------------------------------------------------------------
-// Returns the number of seconds since some fixed arbitrary time in the past
+/*
+ *----------------------------------------------------------------------------
+ * Returns the number of seconds since some fixed arbitrary time in the past
+ */
 
 double wtime( void )
 {
-    timespec ts;
+    struct timespec ts;
     clock_gettime( CLOCK_MONOTONIC, &ts );
-    return double( ts.tv_sec + ts.tv_nsec / 1.0e9 );
+    return (double) ( ts.tv_sec + ts.tv_nsec / 1.0e9 );
 }
 
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
+/*
+ *----------------------------------------------------------------------------
+ *----------------------------------------------------------------------------
+ * Main program
+ */
 
 int main( int argc, char *argv[] )
 {
     const int n = N;
 
-    // allocate contiguous memory for matrices
-
+    /*
+     * allocate contiguous memory for matrices
+     */
 #if defined(USE_MACRO)
-    double* a = new double [n * n];
-    double* b = new double [n * n];
-    double* c = new double [n * n];
+    double* a = (double*) malloc( n * n * sizeof( double ) );
+    double* b = (double*) malloc( n * n * sizeof( double ) );
+    double* c = (double*) malloc( n * n * sizeof( double ) );
 #else
-    double** a = new double* [n];
-    double** b = new double* [n];
-    double** c = new double* [n];
-    a[0] = new double [n * n];
-    b[0] = new double [n * n];
-    c[0] = new double [n * n];
+    double** a = (double**) malloc( n * sizeof( double* ) );
+    double** b = (double**) malloc( n * sizeof( double* ) );
+    double** c = (double**) malloc( n * sizeof( double* ) );
+    a[0] = (double*) malloc( n * n * sizeof( double ) );
+    b[0] = (double*) malloc( n * n * sizeof( double ) );
+    c[0] = (double*) malloc( n * n * sizeof( double ) );
     for ( int i = 1; i < n; i++ )
     {
         a[i] = &a[0][i * n];
@@ -77,16 +80,17 @@ int main( int argc, char *argv[] )
     }
 #endif
 
-    // initalize array and vector
-
+    /*
+     * initalize array and vector
+     */
     for ( int i = 0; i < n; i++ )
     {
         for ( int j = 0; j < n; j++ )
         {
 #if defined(USE_MACRO)
-            a[idx(i,j,n)] = (double) random() / RAND_MAX;
-            b[idx(i,j,n)] = (double) random() / RAND_MAX;
-            c[idx(i,j,n)] = 0.0;
+            a[IDX(i,j,n)] = (double) random() / RAND_MAX;
+            b[IDX(i,j,n)] = (double) random() / RAND_MAX;
+            c[IDX(i,j,n)] = 0.0;
 #else
             a[i][j] = (double) random() / RAND_MAX;
             b[i][j] = (double) random() / RAND_MAX;
@@ -95,8 +99,9 @@ int main( int argc, char *argv[] )
         }
     }
 
-    // compute product
-
+    /*
+     * compute product using ikj loop ordering
+     */
     double t1 = wtime();
     for ( int i = 0; i < n; i++ )
     {
@@ -105,7 +110,7 @@ int main( int argc, char *argv[] )
             for ( int j = 0; j < n; j++ )
             {
 #if defined(USE_MACRO)
-                c[idx(i,j,n)] += a[idx(i,k,n)] * b[idx(k,j,n)];
+                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
 #else
                 c[i][j] += a[i][k] * b[k][j];
 #endif
@@ -113,23 +118,28 @@ int main( int argc, char *argv[] )
         }
     }
     double t2 = wtime();
+
+    /*
+     * report results
+     */
 #if defined(USE_MACRO)
-    cout << "1D ARRAY ACCESS:       ";
+    printf( "1D ARRAY ACCESS:       " );
 #else
-    cout << "2D ARRAY (W/POINTERS): ";
+    printf( "2D ARRAY (W/POINTERS): " );
 #endif
-    cout << t2 - t1 << " seconds" << endl;
+    printf( "%f seconds\n", t2 - t1 );
 
-    // release memory
-
+    /*
+     * release memory
+     */
 #if defined(USE_MACRO)
-    delete [] a;
-    delete [] b;
-    delete [] c;
+    free( a );
+    free( b );
+    free( c );
 #else
-    delete [] a[0]; delete [] a;
-    delete [] b[0]; delete [] b;
-    delete [] c[0]; delete [] c;
+    free( a[0] ); free( a );
+    free( b[0] ); free( b );
+    free( c[0] ); free( c );
 #endif
 
     return 0;

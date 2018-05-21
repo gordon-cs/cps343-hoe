@@ -20,7 +20,7 @@
 # define N 500  /* default matrix dimension */
 #endif
 
-#define IDX(i,j,rowlen) ((i)*(rowlen)+j)
+#define IDX(row,col) ((row)*N+(col))
 
 /*----------------------------------------------------------------------------
  * Returns the number of seconds since some fixed arbitrary time in the past
@@ -43,10 +43,10 @@ void matmat_ijk( double* c, double* a, double* b, int n )
     {
         for ( j = 0; j < n; j++ )
         {
-            c[IDX(i,j,n)] = 0.0;
+            c[IDX(i,j)] = 0.0;
             for ( k = 0; k < n; k++ )
             {
-                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+                c[IDX(i,j)] += a[IDX(i,k)] * b[IDX(k,j)];
             }
         }
     }
@@ -62,13 +62,13 @@ void matmat_jki( double* c, double* a, double* b, int n )
     {
         for ( i = 0; i < n; i++ )
         {
-            c[IDX(i,j,n)] = 0.0;
+            c[IDX(i,j)] = 0.0;
         }
         for ( k = 0; k < n; k++ )
         {
             for ( i = 0; i < n; i++ )
             {
-                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+                c[IDX(i,j)] += a[IDX(i,k)] * b[IDX(k,j)];
             }
         }
     }
@@ -84,13 +84,13 @@ void matmat_ikj( double* c, double* a, double* b, int n )
     {
         for ( j = 0; j < n; j++ )
         {
-            c[IDX(i,j,n)] = 0.0;
+            c[IDX(i,j)] = 0.0;
         }
         for ( k = 0; k < n; k++ )
         {
             for ( j = 0; j < n; j++ )
             {
-                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+                c[IDX(i,j)] += a[IDX(i,k)] * b[IDX(k,j)];
             }
         }
     }
@@ -107,11 +107,11 @@ int verify( double* d, double* c, int n )
     {
         for ( j = 0; j < n; j++ )
         {
-            if ( c[IDX(i,j,n)] != d[IDX(i,j,n)] )
+            if ( c[IDX(i,j)] != d[IDX(i,j)] )
             {
                 status++;
                 printf( "[%d][%d]: c = %f; d = %f\n", i, j,
-                        c[IDX(i,j,n)], d[IDX(i,j,n)] );
+                        c[IDX(i,j)], d[IDX(i,j)] );
             }
         }
     }
@@ -155,8 +155,8 @@ int main( int argc, char* argv[] )
     {
         for ( j = 0; j < N; j++ )
         {
-            a[IDX(i,j,N)] = (double) random() / RAND_MAX;
-            b[IDX(i,j,N)] = (double) random() / RAND_MAX;
+            a[IDX(i,j)] = (double) random() / RAND_MAX;
+            b[IDX(i,j)] = (double) random() / RAND_MAX;
         }
     }
 
