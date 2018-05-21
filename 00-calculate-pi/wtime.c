@@ -8,6 +8,10 @@
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science
  * Gordon College, 255 Grapevine Road, Wenham MA 01984-1899
+ *
+ * Modified by Stephen Macomber to add support for Windows systems
+ * with an accuracy of about 1 microsecond (0.001 milliseconds).
+ * (Tested under MinGW TDM-GCC 4.9.2)
  */
 
 #include <unistd.h>
@@ -18,6 +22,8 @@
 # include <mach/mach.h>
 #elif defined(_POSIX_TIMERS)
 # include <time.h>
+#elif defined(WIN32)
+# include <windows.h>
 #else
 # include <sys/time.h>
 #endif
@@ -37,6 +43,13 @@ double wtime( void )
     struct timespec ts;
     clock_gettime( CLOCK_MONOTONIC, &ts ); /* could be CLOCK_REALTIME */
     return (double) ( ts.tv_sec + ts.tv_nsec / 1.0e9 );
+#elif defined(WIN32)
+    /* Windows */
+    LARGE_INTEGER perfCount;
+    LARGE_INTEGER perfFreq;
+    QueryPerformanceFrequency(&perfFreq);
+    QueryPerformanceCounter(&perfCount);
+    return (double) perfCount.QuadPart / (double) perfFreq.QuadPart;
 #else
     /* Other */
     struct tms buf;

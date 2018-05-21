@@ -6,26 +6,37 @@
 #
 # This file is released into the public domain.
 
+# Determine if PGI C compiler is available.  If so, we assume we want to
+# compile programs using the PGI compiler suite.
+PGCC	:= $(shell which pgcc 2> /dev/null)
+
 # Define variables
-CC	= gcc
-CFLAGS	= -Wall -O3 -funroll-loops
-CXX	= g++
+ifdef PGCC
+	CC	= pgcc
+	CXX	= pgc++
+	CFLAGS	= -fast
+	OMPFLAGS= -mp=allcores
+else
+	CC	= gcc
+	CXX	= g++
+	CFLAGS	= -Wall -O3 -funroll-loops
+	OMPFLAGS= -fopenmp
+endif
 CXXFLAGS= $(CFLAGS)
 MPICC	= mpicc
 MPICXX	= mpic++
-OMP_FLAG= -fopenmp
 
 # List of sources and files to build from them
 SRCS	= pi_serial.cc pi_omp.cc pi_omp_dyn.cc pi_mpi.cc
+OBJS	= $(SRCS:.cc=.o) # replaces .cc extension with .o
 BINS	= $(SRCS:.cc=) # replaces .cc extension with empty string
 
 # First (default) target
 all: $(BINS)
 
-# alternate targets used to clean up directory
-# (pi_serial.o is created by PGI compiler)
+# Alternate targets used to clean up directory
 clean:
-	$(RM) pi_serial.o wtime.o
+	$(RM) wtime.o $(OBJS)
 
 clobber:
 	$(MAKE) clean
@@ -34,10 +45,10 @@ clobber:
 # Explicit dependencies and adjustments to variables
 pi_serial:	pi_serial.cc wtime.o
 
-pi_omp:		CXXFLAGS += $(OMP_FLAG)
+pi_omp:		CXXFLAGS += $(OMPFLAGS)
 pi_omp:		pi_omp.cc
 
-pi_omp_dyn:	CXXFLAGS += $(OMP_FLAG)
+pi_omp_dyn:	CXXFLAGS += $(OMPFLAGS)
 pi_omp_dyn:	pi_omp_dyn.cc
 
 pi_mpi:		CXX = $(MPICXX)
