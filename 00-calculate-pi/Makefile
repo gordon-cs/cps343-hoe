@@ -36,14 +36,14 @@ all: $(BINS)
 
 # Alternate targets used to clean up directory
 clean:
-	$(RM) wtime.o $(OBJS)
+	$(RM) $(OBJS)
 
 clobber:
 	$(MAKE) clean
 	$(RM) $(BINS)
 
 # Explicit dependencies and adjustments to variables
-pi_serial:	pi_serial.cc wtime.o
+pi_serial:	pi_serial.cc
 
 pi_omp:		CXXFLAGS += $(OMPFLAGS)
 pi_omp:		pi_omp.cc
@@ -53,5 +53,3 @@ pi_omp_dyn:	pi_omp_dyn.cc
 
 pi_mpi:		CXX = $(MPICXX)
 pi_mpi:		pi_mpi.cc
-
-wtime.o:	wtime.c wtime.h
