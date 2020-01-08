@@ -5,7 +5,7 @@ All the programs in this directory can be compiled by typing `make` at
 the command prompt.
 
 Note that in order to compile pi_mpi.cc the MPI development headers
-and libaries must be available.  In a system using Lmod environment
+and libraries must be available.  In a system using Lmod environment
 modules this can be accomplished by typing a command like `module load
 openmpi` or `module load mpich`.
 

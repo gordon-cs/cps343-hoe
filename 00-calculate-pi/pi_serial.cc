@@ -18,6 +18,8 @@
 
 //----------------------------------------------------------------------------
 
+// Return wall clock time since arbitrary fixed past time
+
 double wtime( void )
 {
     timespec ts;
