@@ -20,13 +20,9 @@ C23456789012345678901234567890123456789012345678901234567890123456789012
       INTEGER ICMPPR
       INTEGER I,J
       INTEGER M,P,X
-      REAL T1,T2
+      REAL T1,T2,GFLPCT
       REAL TIMIJK,TIMJKI,TIMIKJ
       REAL TARRAY(2),ETIME
-C      REAL RAND
-C
-      WRITE(*,10) N,N
- 10   FORMAT(1X,'MATRIX-MATRIX MULTIPLY: MATRICES ARE ',I5,' X',I5)
 C
 C     INITIALIZE MATRICES
 C
@@ -70,28 +66,23 @@ C
 C
 C     OUTPUT RESULTS
 C
-      WRITE(*,40)
-      WRITE(*,50)
-      WRITE(*,60) TIMIJK,TIMJKI,TIMIKJ
-      WRITE(*,70) (2.0*N**3)/TIMIJK/1.0E6,(2.0*N**3)/TIMJKI/1.0E6,
-     *     (2.0*N**3)/TIMIKJ/1.0E6
-  40  FORMAT(1X,'      IJK             JKI             IKJ')
-  50  FORMAT(1X,'--------------  --------------  --------------')
-  60  FORMAT(1X,F10.6,' SEC',F12.6,' SEC',F12.6, ' SEC')
-  70  FORMAT(1X,F10.2,' MFLOPS',F9.2,' MFLOPS',F9.2,' MFLOPS')
+      GFLPCT = 2.0*N**3/1.0E9
+      WRITE(*,40) N,GFLPCT/TIMIJK,GFLPCT/TIMJKI,GFLPCT/TIMIKJ
+ 40   FORMAT(1X,'Fortran 77     (',i3,') ijk: ',F6.3,' gflops, jki: ',
+     *  F6.3,' gflops, ikj: ',F6.3,' gflops')
 C
 C     COMPARE PRODUCTS
 C
       IF (ICMPPR(C1,C2,N).GT.0) THEN
-         WRITE(*,80) 1,2
+         WRITE(*,50) 1,2
       ENDIF
       IF (ICMPPR(C1,C3,N).GT.0) THEN
-         WRITE(*,80) 1,3
+         WRITE(*,50) 1,3
       ENDIF
       IF (ICMPPR(C2,C3,N).GT.0) THEN
-         WRITE(*,80) 2,3
+         WRITE(*,50) 2,3
       ENDIF
- 80   FORMAT(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')
+ 50   FORMAT(1X,'C',I1,' /= C',I1,': VALIDATION ERROR')
 C
 C     ALL DONE
 C
@@ -128,7 +119,7 @@ C
             C(I,J)=0.0
  10      CONTINUE
          DO 30 K=1,N
-            DO 20 I=1,N   
+            DO 20 I=1,N
                C(I,J)=C(I,J)+A(I,K)*B(K,J)
  20         CONTINUE
  30      CONTINUE
@@ -148,7 +139,7 @@ C
             C(I,J)=0.0
  10      CONTINUE
          DO 30 K=1,N
-            DO 20 J=1,N   
+            DO 20 J=1,N
                C(I,J)=C(I,J)+A(I,K)*B(K,J)
  20         CONTINUE
  30      CONTINUE

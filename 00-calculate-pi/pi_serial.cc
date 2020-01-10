@@ -4,7 +4,7 @@
  * Compute approximation of pi by evaluating the integral of 4/(1+x^2) on
  * the interval [0,1] using the midpoint rule.
  *
- * $Smake: g++ -Wall -O2 -o %F %f
+ * $Smake: g++ -Wall -O2 -o %F %f wtime.c
  *
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science
@@ -14,18 +14,7 @@
  */
 
 #include <iostream>
-#include <time.h>
-
-//----------------------------------------------------------------------------
-
-// Return wall clock time since arbitrary fixed past time
-
-double wtime( void )
-{
-    timespec ts;
-    clock_gettime( CLOCK_MONOTONIC, &ts );
-    return double( ts.tv_sec + ts.tv_nsec / 1.0e9 );
-}
+#include "wtime.h"
 
 //----------------------------------------------------------------------------
 

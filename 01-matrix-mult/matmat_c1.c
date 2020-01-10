@@ -1,5 +1,5 @@
 /*
- * $Smake: gcc -DN=500 -Wall -O3 -o %F %f -lrt
+ * $Smake: gcc -DN=500 -Wall -O3 -o %F %f
  *
  * Jonathan Senning <jonathan.senning@gordon.edu>
  * Department of Mathematics and Computer Science
@@ -26,8 +26,8 @@ const double EPSILON = 1.0E-14;
  * using static memory allocation --
  * arrays are global so they will not be allocated on stack
  */
-double a[N][N];   /* matrix A */
-double b[N][N];   /* matrix B */
+double a[N][N];    /* matrix A */
+double b[N][N];    /* matrix B */
 double c1[N][N];   /* matrix C = A * B (computed via ijk loop order) */
 double c2[N][N];   /* matrix C = A * B (computed via ikj loop order) */
 double c3[N][N];   /* matrix D = A * B (computed via jki loop order) */
@@ -136,10 +136,8 @@ int main( int argc, char* argv[] )
     double ijk_time, jki_time, ikj_time;
     int i, j;
 
-    const double mflop_count = 2.0 * N * N * N / 1.0e6;
+    const double gflop_count = 2.0 * N * N * N / 1.0e9;
 
-    printf( "Matrix-Matrix multiply (static arrays): Matrices are %dx%d\n",
-            N, N );
 
     /*
      * initialize matrices
@@ -181,12 +179,9 @@ int main( int argc, char* argv[] )
     /*
      * output results
      */
-    printf( "        ijk                 jki                ikj\n" );
-    printf( "------------------  ------------------  ------------------\n" );
-    printf( "%10.6g sec%16.6g sec%16.6g sec\n", ijk_time, jki_time, ikj_time );
-    printf( "%10.2f mflops %12.2f mflops %12.2f mflops\n",
-            mflop_count / ijk_time, mflop_count / jki_time,
-            mflop_count / ikj_time );
+    printf( "%-15s (%d) ", "2D static array", N );
+    printf( "ijk: %6.3f gflops, jki: %6.3f gflops, ikj: %6.3f gflops\n",
+    gflop_count / ijk_time, gflop_count / jki_time, gflop_count / ikj_time );
 
     /*
      * verify products

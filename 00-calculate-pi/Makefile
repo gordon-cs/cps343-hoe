@@ -28,7 +28,7 @@ MPICXX	= mpic++
 
 # List of sources and files to build from them
 SRCS	= pi_serial.cc pi_omp.cc pi_omp_dyn.cc pi_mpi.cc
-OBJS	= $(SRCS:.cc=.o) # replaces .cc extension with .o
+OBJS	= wtime.o $(SRCS:.cc=.o) # replaces .cc extension with .o
 BINS	= $(SRCS:.cc=) # replaces .cc extension with empty string
 
 # First (default) target
@@ -43,7 +43,7 @@ clobber:
 	$(RM) $(BINS)
 
 # Explicit dependencies and adjustments to variables
-pi_serial:	pi_serial.cc
+pi_serial:	pi_serial.cc wtime.o
 
 pi_omp:		CXXFLAGS += $(OMPFLAGS)
 pi_omp:		pi_omp.cc
@@ -53,3 +53,5 @@ pi_omp_dyn:	pi_omp_dyn.cc
 
 pi_mpi:		CXX = $(MPICXX)
 pi_mpi:		pi_mpi.cc
+
+wtime.o:	wtime.c wtime.h

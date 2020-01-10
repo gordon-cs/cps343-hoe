@@ -40,7 +40,7 @@ Description and instructions
 * pi_mpi.cc
 
   This version uses MPI and is suitable for distributed memory
-  system like a cluster.  To run on a single machine, use
+  system like a cluster.  To run on a single multicore machine, use
   ```shell
   mpiexec -n <N> ./pi_mpi
   ```

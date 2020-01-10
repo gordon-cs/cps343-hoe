@@ -7,7 +7,7 @@
  *
  * Benchmark ijk, jki, and ikj matrix-matrix products.
  *
- * "Matrix with 1D arrays" version.
+ * "Matrix as array of pointers" version.
  */
 
 #include <stdio.h>
@@ -21,7 +21,6 @@
 #endif
 
 const double EPSILON = 1.0E-14;
-#define IDX(i,j,stride) ((i)*(stride)+j)
 
 /*----------------------------------------------------------------------------
  * Returns the number of seconds since some fixed arbitrary time in the past
@@ -37,17 +36,17 @@ double wtime( void )
 /*----------------------------------------------------------------------------
  * Compute matrix-matrix product using ijk loop order
  */
-void matmat_ijk( double* c, double* a, double* b, int n )
+void matmat_ijk( double** c, double** a, double** b, int n )
 {
     int i, j, k;
     for ( i = 0; i < n; i++ )
     {
         for ( j = 0; j < n; j++ )
         {
-            c[IDX(i,j,n)] = 0.0;
+            c[i][j] = 0.0;
             for ( k = 0; k < n; k++ )
             {
-                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+                c[i][j] += a[i][k] * b[k][j];
             }
         }
     }
@@ -56,20 +55,20 @@ void matmat_ijk( double* c, double* a, double* b, int n )
 /*----------------------------------------------------------------------------
  * Compute matrix-matrix product using jki loop order
  */
-void matmat_jki( double* c, double* a, double* b, int n )
+void matmat_jki( double** c, double** a, double** b, int n )
 {
     int i, j, k;
     for ( j = 0; j < n; j++ )
     {
         for ( i = 0; i < n; i++ )
         {
-            c[IDX(i,j,n)] = 0.0;
+            c[i][j] = 0.0;
         }
         for ( k = 0; k < n; k++ )
         {
             for ( i = 0; i < n; i++ )
             {
-                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+                c[i][j] += a[i][k] * b[k][j];
             }
         }
     }
@@ -78,20 +77,20 @@ void matmat_jki( double* c, double* a, double* b, int n )
 /*----------------------------------------------------------------------------
  * Compute matrix-matrix product using ikj loop order
  */
-void matmat_ikj( double* c, double* a, double* b, int n )
+void matmat_ikj( double** c, double** a, double** b, int n )
 {
     int i, j, k;
     for ( i = 0; i < n; i++ )
     {
         for ( j = 0; j < n; j++ )
         {
-            c[IDX(i,j,n)] = 0.0;
+            c[i][j] = 0.0;
         }
         for ( k = 0; k < n; k++ )
         {
             for ( j = 0; j < n; j++ )
             {
-                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+                c[i][j] += a[i][k] * b[k][j];
             }
         }
     }
@@ -100,7 +99,7 @@ void matmat_ikj( double* c, double* a, double* b, int n )
 /*----------------------------------------------------------------------------
  * Verify product
  */
-int verify( double* d, double* c, int n )
+int verify( double** c, double** d, int n )
 {
     int i, j;
     int status = 0;
@@ -108,11 +107,10 @@ int verify( double* d, double* c, int n )
     {
         for ( j = 0; j < n; j++ )
         {
-            if ( fabs( c[IDX(i,j,n)] != d[IDX(i,j,n)] ) > EPSILON )
+            if ( fabs( c[i][j] != d[i][j] ) > EPSILON )
             {
                 status++;
-                printf( "[%d][%d]: c = %f; d = %f\n", i, j,
-                        c[IDX(i,j,n)], d[IDX(i,j,n)] );
+                printf( "[%d][%d]: c = %f; d = %f\n", i, j, c[i][j], d[i][j] );
             }
         }
     }
@@ -130,21 +128,35 @@ int main( int argc, char* argv[] )
 
     const double gflop_count = 2.0 * N * N * N / 1.0e9;
 
-    double* a;    /* matrix A */
-    double* b;    /* matrix B */
-    double* c1;   /* matrix C = A * B (computed via ijk loop order) */
-    double* c2;   /* matrix C = A * B (computed via ikj loop order) */
-    double* c3;   /* matrix D = A * B (computed via jki loop order) */
+    double** a;    /* matrix A */
+    double** b;    /* matrix B */
+    double** c1;   /* matrix C = A * B (computed via ijk loop order) */
+    double** c2;   /* matrix C = A * B (computed via ikj loop order) */
+    double** c3;   /* matrix D = A * B (computed via jki loop order) */
 
     /*
      * allocate memory for matrices.
-     * in this case, matrices are linear arrays (row by row).
+     * in this case, matrices are constructed as an array of row pointers
+     * each pointing to a row in a contiguous memory block.
      */
-    a = (double*) malloc( N * N * sizeof( double ) );
-    b = (double*) malloc( N * N * sizeof( double ) );
-    c1 = (double*) malloc( N * N * sizeof( double ) );
-    c2 = (double*) malloc( N * N * sizeof( double ) );
-    c3 = (double*) malloc( N * N * sizeof( double ) );
+    a = (double**) malloc( N * sizeof( double* ) );
+    b = (double**) malloc( N * sizeof( double* ) );
+    c1 = (double**) malloc( N * sizeof( double* ) );
+    c2 = (double**) malloc( N * sizeof( double* ) );
+    c3 = (double**) malloc( N * sizeof( double* ) );
+    a[0] = (double*) malloc( N * N * sizeof( double ) );
+    b[0] = (double*) malloc( N * N * sizeof( double ) );
+    c1[0] = (double*) malloc( N * N * sizeof( double ) );
+    c2[0] = (double*) malloc( N * N * sizeof( double ) );
+    c3[0] = (double*) malloc( N * N * sizeof( double ) );
+    for ( i = 1; i < N; i++ )
+    {
+        a[i] = &a[0][i * N];
+        b[i] = &b[0][i * N];
+        c1[i] = &c1[0][i * N];
+        c2[i] = &c2[0][i * N];
+        c3[i] = &c3[0][i * N];
+    }
 
     /*
      * initialize matrices
@@ -154,8 +166,8 @@ int main( int argc, char* argv[] )
     {
         for ( j = 0; j < N; j++ )
         {
-            a[IDX(i,j,N)] = (double) random() / RAND_MAX;
-            b[IDX(i,j,N)] = (double) random() / RAND_MAX;
+            a[i][j] = (double) random() / RAND_MAX;
+            b[i][j] = (double) random() / RAND_MAX;
         }
     }
 
@@ -186,7 +198,7 @@ int main( int argc, char* argv[] )
     /*
      * output results
      */
-    printf( "%-15s (%d) ", "1D array (ROW)", N );
+    printf( "%-15s (%d) ", "2D ptr array", N );
     printf( "ijk: %6.3f gflops, jki: %6.3f gflops, ikj: %6.3f gflops\n",
     gflop_count / ijk_time, gflop_count / jki_time, gflop_count / ikj_time );
 
@@ -212,6 +224,11 @@ int main( int argc, char* argv[] )
     /*
      * all done
      */
+    free( a[0] );
+    free( b[0] );
+    free( c1[0] );
+    free( c2[0] );
+    free( c3[0] );
     free( a );
     free( b );
     free( c1 );
