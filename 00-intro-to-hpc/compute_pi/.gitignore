@@ -1,4 +1,4 @@
 pi_mpi
 pi_omp
-pi_omp_dyn
 pi_serial
+wtime.o
