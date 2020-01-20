@@ -93,5 +93,8 @@ Subdirectory `matrix_matrix_multiply`
 
 * `matmat_f77.f` - Written in FORTRAN 77
 
-* `matmat_ijk.c` - Template with ijk and jki loop-orderings; user writes
-  for ikj, jik, kij, and kji orderings.
+* `matmat_ijk.c` - Template with *ijk* and *jki* loop-orderings; user writes
+  for *ikj*, *jik*, *kij*, and *kji* orderings.
+
+* `matmat_ijk_macro.c` - same as `matmat_ijk.c` except this version uses
+  1D arrays for the matrices and a macro for indexing.
