@@ -1,2 +1,5 @@
 mult-cblas.c
 mult-cblas-hdf5.c
+mult-cblas
+mult-cblas-hdf5
+mult-template
