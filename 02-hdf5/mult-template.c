@@ -1,21 +1,27 @@
 /*
  * $Smake: gcc -Wall -O3 -o %F %f
  *
- * Matrix-matrix product
+ * Computes a matrix-matrix product
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <math.h>
 #include <time.h>
 
 /* Macro to index matrices in column-major (Fortran) order */
 #define IDX(i,j,stride) ((i)+(j)*(stride))  /* column major */
 
 /*----------------------------------------------------------------------------
- * Usage
+ * Display string showing how to run program from command line
+ *
+ * Input:
+ *   char* program_name (in)  name of executable
+ * Output:
+ *   writes to stderr
+ * Returns:
+ *   nothing
  */
 void usage( char* program_name )
 {
@@ -24,13 +30,20 @@ void usage( char* program_name )
 
 /*----------------------------------------------------------------------------
  * Dump Matrix
+ *
+ * Parameters:
+ *   double* a          (in)  pointer to matrix data
+ *   int rows           (in)  number of rows in matrix
+ *   int cols           (in)  number of columns in matrix
+ *   int stride         (in)  =rows if column major or =cols if row major
+* Returns:
+ *   nothing
  */
-void dumpMatrix( double* a, int m, int n, int stride )
+void dumpMatrix( double* a, int rows, int cols, int stride )
 {
-    int i, j;
-    for ( i = 0; i < m; i++ )
+    for ( int i = 0; i < rows; i++ )
     {
-        for ( j = 0; j < n; j++ )
+        for ( int j = 0; j < cols; j++ )
         {
             printf( " %8.2f", a[IDX(i,j,stride)] );
         }
@@ -40,7 +53,15 @@ void dumpMatrix( double* a, int m, int n, int stride )
 }
 
 /*----------------------------------------------------------------------------
- * create Matrix based on supplied name
+ * Create Matrix based on supplied name
+ *
+ * Parameters:
+ *   char* name         (in)  name of matrix ("A" or "B")
+ *   double** a         (out) pointer to pointer to matrix data
+ *   int* rows          (out) pointer to number of rows
+ *   int* cols          (out) pointer to number of cols
+ * Returns:
+ *   nothing
  */
 void createMatrix( char* name, double** a, int* rows, int* cols )
 {
@@ -74,23 +95,28 @@ void createMatrix( char* name, double** a, int* rows, int* cols )
 
 /*----------------------------------------------------------------------------
  * Form matrix product C = AB
+ *
+ * Parameters:
+ *   double* c          (out) pointer to result matrix (nrows_a x ncols_b)
+ *   double* a          (in)  pointer to left matrix
+ *   int nrow_a         (in)  rows in left matrix
+ *   int ncol_a         (in)  cols in left matrix (rows in right matrix)
+ *   double* b          (in)  pointer to right matrix
+ *   int ncol_b         (in)  cols in right matrix
+ * Returns:
+ *   nothing
  */
 void matmat_jki( double* c, double* a, int nrow_a, int ncol_a,
                  double* b, int ncol_b )
 {
     const int nrow_b = ncol_a;
     const int nrow_c = nrow_a;
-    int i, j, k;
-    for ( j = 0; j < ncol_b; j++ )
+    for ( int j = 0; j < ncol_b; j++ )
     {
-        for ( i = 0; i < nrow_a; i++ ) c[IDX(i,j,nrow_c)] = 0.0;
-        for ( k = 0; k < ncol_a; k++ )
-        {
-            for ( i = 0; i < nrow_a; i++ )
-            {
+        for ( int i = 0; i < nrow_a; i++ ) c[IDX(i,j,nrow_c)] = 0.0;
+        for ( int k = 0; k < ncol_a; k++ )
+            for ( int i = 0; i < nrow_a; i++ )
                 c[IDX(i,j,nrow_c)] += a[IDX(i,k,nrow_a)] * b[IDX(k,j,nrow_b)];
-            }
-        }
     }
 }
 
@@ -99,13 +125,13 @@ void matmat_jki( double* c, double* a, int nrow_a, int ncol_a,
  */
 int main( int argc, char* argv[] )
 {
-    double* a;
-    double* b;
-    double* c;
-    int nrow_a, ncol_a;
-    int nrow_b, ncol_b;
-    int nrow_c, ncol_c;
-    int verbose = 0;
+    double* a;             /* left matrix */
+    double* b;             /* right matrix */
+    double* c;             /* product C = AB */
+    int nrow_a, ncol_a;    /* dimensions of left matrix */
+    int nrow_b, ncol_b;    /* dimensions of right matrix */
+    int nrow_c, ncol_c;    /* dimensions of product matrix */
+    int verbose = 0;       /* nonzero for extra output */
 
     /* Process command line */
     int ch;
@@ -125,13 +151,14 @@ int main( int argc, char* argv[] )
     argv += ( optind - 1 );
     argc -= ( optind - 1 );
 
+    /* Make sure there are no additional arguments */
     if ( argc != 1 )
     {
         usage( argv[0] );
         return EXIT_FAILURE;
     }
 
-    /* create matrix data and optionally display it */
+    /* Create matrix data and optionally display it */
     createMatrix( "A", &a, &nrow_a, &ncol_a );
     createMatrix( "B", &b, &nrow_b, &ncol_b );
 
@@ -149,7 +176,7 @@ int main( int argc, char* argv[] )
         dumpMatrix( b, nrow_b, ncol_b, nrow_b );
     }
 
-    /* Compute matrix product C = AB and optionally display it */
+    /* Compute matrix product C = AB and display it */
     nrow_c = nrow_a;
     ncol_c = ncol_b;
     c = (double*) malloc( nrow_c * ncol_c * sizeof( double ) );
