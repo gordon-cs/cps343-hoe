@@ -44,7 +44,7 @@ args_req args: args.c
 #
 ifneq (,$(findstring atlas,$(LMOD_FAMILY_BLAS)))
   matrix_prod:	CFLAGS += -DHAVE_BLAS -DHAVE_CBLAS
-  matrix_prod:	LDLIBS += -lcblas -lf77blas -lsatlas -lgfortran
+  matrix_prod:	LDLIBS += -lcblas -lf77blas -latlas -lgfortran
 else ifneq (,$(findstring openblas,$(LMOD_FAMILY_BLAS)))
   matrix_prod:	CFLAGS += -DHAVE_BLAS
   matrix_prod:	LDLIBS += -lopenblas

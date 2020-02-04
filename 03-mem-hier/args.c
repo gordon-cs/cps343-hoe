@@ -1,12 +1,6 @@
 /*
  * $Smake: gcc -o %F %f; gcc -DARGS_REQUIRED -o %F_req %f
  *
- * Jonathan Senning <jonathan.senning@gordon.edu>
- * Department of Mathematics and Computer Science
- * Gordon College, 255 Grapevine Road, Wenham MA 01984-1899
- *
- * This program is released into the public domain.
- *
  * Demonstration of passing integer and floating point parameters on
  * command line.
  *
