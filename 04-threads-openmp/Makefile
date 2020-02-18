@@ -25,7 +25,7 @@ SRCS	= thread.cc thread-c++11.cc bounded-buffer.cc \
 # Build targets
 #
 BINS	= $(SRCS:.cc=)
-OBJS	= randomInt.o
+OBJS	=
 
 .PHONY: all
 all:	$(BINS)
@@ -40,8 +40,6 @@ clean clobber:
 #
 # Non-default dependencies for individual programs and objects
 #
-randomInt.o:		randomInt.cc randomInt.h
-
 thread:			CXXFLAGS += -pthread
 thread-c++11:		CXXFLAGS += -std=c++11 -pthread
 bounded-buffer:		CXXFLAGS += -pthread
