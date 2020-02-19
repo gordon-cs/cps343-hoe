@@ -1,32 +1,18 @@
 /*
- * $Smake: g++ -DN=1000 -Wall -O2 -o %F %f -lrt
+ * $Smake: g++ -Wall -O2 -o %F %f
  *
- * Jonathan Senning <jonathan.senning@gordon.edu>
- * Department of Mathematics and Computer Science
- * Gordon College, 255 Grapevine Road, Wenham MA 01984-1899
+ * Benchmark serial and parallel matrix-matrix products.  Parallel version
+ * uses OpenMP and parallelizes the outer loop so that rows are assigned to
+ * threads.
  *
- * Benchmark serial and parallel matrix-matrix products (after modification).
- * The parallel version should use OpenMP.
  */
 
 #include <cstdio>
 #include <cstdlib>
 #include <time.h>
 
-using namespace std;
-
-#if !defined(N)
-# define N 1000  /* default matrix dimension */
-#endif
-
-// Using static memory allocation.
-// Arrays are global so they will not be allocated on stack AND so that
-// references to them do not have to be passed to thread functions.
-
-double a[N][N];  /* matrix A */
-double b[N][N];  /* matrix B */
-double c[N][N];  /* matrix C = A * B (serial product) */
-double d[N][N];  /* matrix D = A * B (parallel product */
+#define N 1000 // default matrix dimension
+#define IDX(i,j,stride) ((i)*(stride)+(j)) // row major (C/C++)
 
 //----------------------------------------------------------------------------
 // Returns the number of seconds since some fixed arbitrary time in the past.
@@ -39,6 +25,68 @@ double wtime( void )
 }
 
 //----------------------------------------------------------------------------
+// Compute matrix-matrix product -- this is baseline serial version
+
+void doSerialProduct( double* c, double* a, double* b, int n )
+{
+    for ( int i = 0; i < n * n; i++ )
+    {
+        c[i] = 0.0;
+    }
+    for ( int i = 0; i < n; i++ )
+    {
+        for ( int k = 0; k < n; k++ )
+        {
+            for ( int j = 0; j < n; j++ )
+            {
+                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+// Compute matrix-matrix product -- parallel version
+// **** THIS FUNCTION SHOULD BE MODIFIED TO RUN IN PARALLEL ****
+
+void doParallelProduct( double* c, double* a, double* b, int n )
+{
+    for ( int i = 0; i < n * n; i++ )
+    {
+        c[i] = 0.0;
+    }
+
+    for ( int i = 0; i < n; i++ )
+    {
+        for ( int k = 0; k < n; k++ )
+        {
+            for ( int j = 0; j < n; j++ )
+            {
+                c[IDX(i,j,n)] += a[IDX(i,k,n)] * b[IDX(k,j,n)];
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+// verify products; no output means the products match
+
+void verifyProduct( double* a, double* b, int n )
+{
+    for ( int i = 0; i < n; i++ )
+    {
+        for ( int j = 0; j < n; j++ )
+        {
+            if ( a[IDX(i,j,n)] != b[IDX(i,j,n)] )
+            {
+                printf( "** ERROR ** location [%d][%d]: %f != %f\n",
+                        i, j, a[IDX(i,j,n)], b[IDX(i,j,n)] );
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
 int main( int argc, char* argv[] )
@@ -47,62 +95,50 @@ int main( int argc, char* argv[] )
     double serial_time;
     double parallel_time;
 
-    srandom( (unsigned int) time( NULL ) );
+    // set matrix dimension from command line or use default value
 
-    printf( "Matrix-Matrix multiply: Matrices are %d x %d\n", N, N );
-
-    // initialize matrices
-
-    for ( int i = 0; i < N; i++ )
+    int n = ( argc > 1 ? atoi( argv[1] ) : N );
+    if ( n <= 0 )
     {
-        for ( int j = 0; j < N; j++ )
-        {
-            a[i][j] = double( random() ) / RAND_MAX;
-            b[i][j] = double( random() ) / RAND_MAX;
-        }
+        fprintf( stderr, "N must be positive, got N = %d\n", n );
+        return EXIT_FAILURE;
     }
 
-    // begin serial product
+    printf( "Matrix-Matrix multiply: Matrices are %d x %d\n", n, n );
+
+    // allocate and initialize matrices
+
+    double* a = new double [n * n];  // matrix A
+    double* b = new double [n * n];  // matrix B
+    double* c = new double [n * n];  // matrix C = A * B (serial product)
+    double* d = new double [n * n];  // matrix D = A * B (parallel product)
+
+    srandom( (unsigned int) time( NULL ) );
+    for ( int i = 0; i < n * n; i++ )
+    {
+        a[i] = double( random() ) / RAND_MAX;
+        b[i] = double( random() ) / RAND_MAX;
+    }
+
+    // compute serial product
 
     t1 = wtime();
-    for ( int i = 0; i < N; i++ )
-    {
-        for ( int j = 0; j < N; j++ )
-        {
-            c[i][j] = 0.0;
-        }
-        for ( int k = 0; k < N; k++ )
-        {
-            for ( int j = 0; j < N; j++ )
-            {
-                c[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
+    doSerialProduct( c, a, b, n );
     t2 = wtime();
     serial_time = t2 - t1;
 
-    //********************************************************************
-    //* Modify nested loops below so the computation is done in parallel *
-    //********************************************************************
+    // compute product in parallel
 
     t1 = wtime();
-    for ( int i = 0; i < N; i++ )
-    {
-        for ( int j = 0; j < N; j++ )
-        {
-            d[i][j] = 0.0;
-        }
-        for ( int k = 0; k < N; k++ )
-        {
-            for ( int j = 0; j < N; j++ )
-            {
-                d[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
+    doParallelProduct( d, a, b, n );
     t2 = wtime();
     parallel_time = t2 - t1;
+
+    // verify product
+
+    verifyProduct( c, d, n );
+
+    // report
 
     printf( "   Serial Time        Parallel Time\n" );
     printf( "    (seconds)           (seconds)       Speedup\n" );
@@ -110,20 +146,11 @@ int main( int argc, char* argv[] )
     printf( "%12.6f        %12.6f    %10.3f\n", serial_time,
             parallel_time, serial_time / parallel_time );
 
-    // verify products; no output means the products match
-
-    for ( int i = 0; i < N; i++ )
-    {
-        for ( int j = 0; j < N; j++ )
-        {
-            if ( c[i][j] != d[i][j] )
-            {
-                printf( "[%d][%d]: c = %f; d = %f\n", i, j, c[i][j], d[i][j] );
-            }
-        }
-    }
-
     // all done
 
+    delete [] a;
+    delete [] b;
+    delete [] c;
+    delete [] d;
     return 0;
 }
