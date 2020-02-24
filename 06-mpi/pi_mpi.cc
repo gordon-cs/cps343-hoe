@@ -1,1 +1,0 @@
-../00-calculate-pi/pi_mpi.cc
