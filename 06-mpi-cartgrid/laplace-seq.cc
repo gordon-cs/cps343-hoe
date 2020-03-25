@@ -158,7 +158,7 @@ int main( int argc, char* argv[] )
 
     // Process command line
     int c;
-    while ( ( c = getopt( argc, argv, "e:m:n:s:v" ) ) != -1 )
+    while ( ( c = getopt( argc, argv, "e:hm:n:s:v" ) ) != -1 )
     {
         switch ( c )
         {
@@ -182,6 +182,7 @@ int main( int argc, char* argv[] )
             case 'v':
                 verbosity++;
                 break;
+            case 'h':
             default:
                 usage( argv[0] );
                 return 0;
