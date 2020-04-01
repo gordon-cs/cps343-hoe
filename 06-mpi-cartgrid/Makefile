@@ -1,5 +1,6 @@
 CXX	:= mpic++
 CXXFLAGS:= -Wall -g -O3 -funroll-loops
+LDLIBS	:= -lrt
 
 # Project files
 
