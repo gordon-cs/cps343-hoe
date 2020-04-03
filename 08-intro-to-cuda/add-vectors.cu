@@ -1,4 +1,4 @@
-// $Smake: nvcc -O2 -o %F %f
+// $Smake: nvcc -arch=sm_30 -O2 -o %F %f
 //
 // vadd.cu - addition of two arrays on GPU device
 //
@@ -53,11 +53,11 @@ int main( int argc, char* argv[] )
     }
 
     // determine vector size in bytes
-    size_t vector_size = n * sizeof( float );
+    const size_t vector_size = n * sizeof( float );
 
     // declare pointers to vectors in host memory and allocate memory
     float *a, *b, *c;
-    a = (float*) malloc( vector_size );  // could also use C++ "new" operator
+    a = (float*) malloc( vector_size );
     b = (float*) malloc( vector_size );
     c = (float*) malloc( vector_size );
 
@@ -94,12 +94,12 @@ int main( int argc, char* argv[] )
     }
 
     // cleanup and quit
-    free( a );        // or C++ "delete" operator
-    free( b );
-    free( c );
     cudaFree( a_d );
     cudaFree( b_d );
     cudaFree( c_d );
+    free( a );
+    free( b );
+    free( c );
   
     return 0;
 }
