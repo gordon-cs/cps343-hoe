@@ -1,6 +1,6 @@
 // $Smake: nvcc -arch=sm_30 -O2 -o %F %f
 //
-// vadd.cu - addition of two arrays on GPU device
+// add-vectors.cu - addition of two arrays on GPU device
 //
 // This program follows a very standard pattern:
 //  1) allocate memory on host
