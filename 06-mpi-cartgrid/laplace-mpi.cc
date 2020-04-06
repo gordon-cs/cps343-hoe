@@ -132,10 +132,10 @@ void impose_boundary_conditions(
 
 // Perform a single Jacobi Sweep on grid u storing results in grid v
 void jacobi_sweep(
-    int nx,     // number of x grid points 
-    int ny,     // number of y grid points
+    double* v,  // updated grid data
     double* u,  // grid data
-    double* v   // updated grid data
+    int nx,     // number of x grid points 
+    int ny      // number of y grid points
     )
 {
     for ( int i = 1; i < nx-1; i++ )
@@ -152,26 +152,23 @@ void jacobi_sweep(
 
 // Copy interior of u into interior of v
 void update(
-    int nx,     // number of x grid points 
-    int ny,     // number of y grid points
+    double* v,  // destination grid data
     double* u,  // source grid data
-    double* v   // destination grid data
+    int nx,     // number of x grid points 
+    int ny      // number of y grid points
     )
 {
-    for ( int i = 1; i < nx-1; i++ )
-    {
-        for ( int j = 1; j < ny-1; j++ ) v[IDX(i,j)] = u[IDX(i,j)];
-    }
+    for ( int i = 0; i < nx * ny; i++ ) v[i] = u[i];
 }
 
 //---------------------------------------------------------------------------
 
-// Compute L infinity norm between u and v
+// Compute L-infinity norm between interior values of u and v
 double norm(
-    int nx,     // number of x grid points 
-    int ny,     // number of y grid points
+    double* v,  // updated grid data
     double* u,  // original grid data
-    double* v   // updated grid data
+    int nx,     // number of x grid points 
+    int ny      // number of y grid points
     )
 {
     double s = 0.0;
@@ -255,7 +252,7 @@ int main( int argc, char* argv[] )
     int ny = DEFAULT_DIMENSION;
     int max_iter = DEFAULT_ITERATIONS;
     double tolerance = DEFAULT_TOLERANCE;
-    int iterations_between_reports = DEFAULT_ITERATION_STRIDE;
+    int iterations_between_checks = DEFAULT_ITERATION_STRIDE;
     int verbosity = 0;
 
     int num_proc;              // number of processes
@@ -294,9 +291,9 @@ int main( int argc, char* argv[] )
                 if ( max_iter <= 0 ) max_iter = DEFAULT_ITERATIONS;
                 break;
             case 's':
-                iterations_between_reports = atoi( optarg );
-                if ( iterations_between_reports <= 0 )
-                    iterations_between_reports = DEFAULT_ITERATION_STRIDE;
+                iterations_between_checks = atoi( optarg );
+                if ( iterations_between_checks <= 0 )
+                    iterations_between_checks = DEFAULT_ITERATION_STRIDE;
                 break;
             case 'v':
                 verbosity++;
@@ -306,7 +303,6 @@ int main( int argc, char* argv[] )
                 if ( my_rank == 0 ) usage( argv[0] );
                 MPI_Finalize();
                 return 0;
-                break;
         }
     }
 
@@ -322,27 +318,27 @@ int main( int argc, char* argv[] )
     // Prepare grid
     init_grid( &halo_grid, u );
     impose_boundary_conditions( 0.0, 1.0, 0.0, 1.0, nx, ny, &halo_grid, u );
+    update( v, u, halo_grid.nx, halo_grid.ny );
 
     if ( verbosity > 1 ) dump_grid( my_rank, num_proc, &halo_grid, u, comm2d );
 
     // Do Jacobi iterations until convergence or too many iterations
+    double t0 = MPI_Wtime();
     int k = 0;
     double alpha = 2 * tolerance;
-    double t0 = MPI_Wtime();
     while ( k++ < max_iter && alpha > tolerance )
     {
         exchange_halo_data( u, &halo_grid, x_slice, y_slice, comm2d );
-        
-        jacobi_sweep( halo_grid.nx, halo_grid.ny, u, v );
-        double my_alpha = norm( halo_grid.nx, halo_grid.ny, u, v );
-        MPI_Allreduce( &my_alpha, &alpha, 1, MPI_DOUBLE, MPI_SUM, comm2d );
-        update( halo_grid.nx, halo_grid.ny, v, u );
-        if ( verbosity > 0 && k % iterations_between_reports == 0 )
+        jacobi_sweep( v, u, halo_grid.nx, halo_grid.ny );
+        if ( k % iterations_between_checks == 0 )
         {
-            if ( my_rank == 0 ) printf( "%6d %e\n", k, alpha );
+            double my_alpha = norm( u, v, halo_grid.nx, halo_grid.ny );
+            MPI_Allreduce( &my_alpha, &alpha, 1, MPI_DOUBLE, MPI_SUM, comm2d );
+            if ( verbosity > 0 && my_rank == 0 ) printf( "%6d %e\n", k, alpha );
             if ( verbosity > 1 )
                 dump_grid( my_rank, num_proc, &halo_grid, u, comm2d );
         }
+        update( u, v, halo_grid.nx, halo_grid.ny );
     }
     double t1 = MPI_Wtime();
 
