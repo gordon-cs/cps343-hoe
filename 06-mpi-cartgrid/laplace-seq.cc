@@ -80,10 +80,10 @@ void impose_boundary_conditions(
 
 // Perform a single Jacobi Sweep on grid u storing results in grid v
 void jacobi_sweep(
-    int nx,     // number of x grid points 
-    int ny,     // number of y grid points
+    double* v,  // updated grid data
     double* u,  // grid data
-    double* v   // updated grid data
+    int nx,     // number of x grid points 
+    int ny      // number of y grid points
     )
 {
     for ( int i = 1; i < nx-1; i++ )
@@ -100,26 +100,23 @@ void jacobi_sweep(
 
 // Copy interior of u into interior of v
 void update(
-    int nx,     // number of x grid points 
-    int ny,     // number of y grid points
+    double* v,  // destination grid data
     double* u,  // source grid data
-    double* v   // destination grid data
+    int nx,     // number of x grid points 
+    int ny      // number of y grid points
     )
 {
-    for ( int i = 1; i < nx-1; i++ )
-    {
-        for ( int j = 1; j < ny-1; j++ ) v[IDX(i,j)] = u[IDX(i,j)];
-    }
+    for ( int i = 0; i < nx * ny; i++ ) v[i] = u[i];
 }
 
 //---------------------------------------------------------------------------
 
-// Compute L infinity norm between u and v
+// Compute L-infinity norm between interior values of u and v
 double norm(
-    int nx,     // number of x grid points 
-    int ny,     // number of y grid points
+    double* v,  // updated grid data
     double* u,  // original grid data
-    double* v   // updated grid data
+    int nx,     // number of x grid points 
+    int ny      // number of y grid points
     )
 {
     double s = 0.0;
@@ -153,7 +150,7 @@ int main( int argc, char* argv[] )
     int ny = DEFAULT_DIMENSION;
     int max_iter = DEFAULT_ITERATIONS;
     double tolerance = DEFAULT_TOLERANCE;
-    int iterations_between_reports = DEFAULT_ITERATION_STRIDE;
+    int iterations_between_checks = DEFAULT_ITERATION_STRIDE;
     int verbosity = 0;
 
     // Process command line
@@ -175,9 +172,9 @@ int main( int argc, char* argv[] )
                 if ( max_iter <= 0 ) max_iter = DEFAULT_ITERATIONS;
                 break;
             case 's':
-                iterations_between_reports = atoi( optarg );
-                if ( iterations_between_reports <= 0 )
-                    iterations_between_reports = DEFAULT_ITERATION_STRIDE;
+                iterations_between_checks = atoi( optarg );
+                if ( iterations_between_checks <= 0 )
+                    iterations_between_checks = DEFAULT_ITERATION_STRIDE;
                 break;
             case 'v':
                 verbosity++;
@@ -186,7 +183,6 @@ int main( int argc, char* argv[] )
             default:
                 usage( argv[0] );
                 return 0;
-                break;
         }
     }
 
@@ -197,20 +193,21 @@ int main( int argc, char* argv[] )
     // Prepare grid
     init_grid( nx, ny, u );
     impose_boundary_conditions( 0.0, 1.0, 0.0, 1.0, nx, ny, u );
+    update( v, u, nx, ny );
 
     // Do Jacobi iterations until convergence or too many iterations
+    double t0 = wtime();
     int k = 0;
     double alpha = 2 * tolerance;
-    double t0 = wtime();
     while ( k++ < max_iter && alpha > tolerance )
     {
-        jacobi_sweep( nx, ny, u, v );
-        alpha = norm( nx, ny, u, v );
-        update( nx, ny, v, u );
-        if ( verbosity > 0 && k % iterations_between_reports == 0 )
+        jacobi_sweep( v, u, nx, ny );
+        if ( k % iterations_between_checks == 0 )
         {
-            printf( "%6d %e\n", k, alpha );
+            alpha = norm( u, v, nx, ny );
+            if ( verbosity > 0 ) printf( "%6d %e\n", k, alpha );
         }
+        update( u, v, nx, ny );
     }
     double t1 = wtime();
 
