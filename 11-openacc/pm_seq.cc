@@ -13,7 +13,7 @@
 #include "wtime.h"
 
 // Compute index into single linear array for matrix element (i,j)
-#define IDX(i,j,stride) ((i)*(stride)+(j)) // row major (c/c++ ordering)
+#define IDX(i,j,stride) ((i)*(stride)+(j)) // row major (C/C++)
 
 //----------------------------------------------------------------------------
 
@@ -62,11 +62,76 @@ void dumpVector(
     int n            // in  - vector length
     )
 {
-    for ( int i = 0; i < n; i++ )
-    {
-        printf( " %8.2f\n", x[i] );
-    }
+    for ( int i = 0; i < n; i++ ) printf( " %9.6f\n", x[i] );
     fflush( stdout );
+}
+
+//----------------------------------------------------------------------------
+
+// Copy contents of vector x into vector y
+void copyVector(
+    double* y,       // out - vector (array) of data
+    double* x,       // in  - vector (array) of data
+    int n            // in  - vector length
+    )
+{
+    for ( int i = 0; i < n; i++ ) y[i] = x[i];
+}
+
+//----------------------------------------------------------------------------
+
+// Scale vector
+void scaleVector(
+    double sf,       // in     - scale factor
+    double* x,       // in/out - vector (array) of data
+    int n            // in     - vector length
+    )
+{
+    for ( int i = 0; i < n; i++ ) x[i] *= sf;
+}
+
+//----------------------------------------------------------------------------
+
+// Compute inner (dot) product of two vectors
+double dotProduct(
+    double* x,       // in  - vector (array)
+    double* y,       // in  - vector (array)
+    int n            // in  - vector length
+    )
+{
+    double sum = 0.0;
+    for ( int i = 0; i < n; i++ ) sum += x[i] * y[i];
+    return sum;
+}
+
+//----------------------------------------------------------------------------
+
+// Compute L2 norm of vector
+double vectorNorm(
+    double* x,       // in  - vector (array)
+    int n            // in  - vector length
+    )
+{
+    return sqrt( dotProduct( x, x, n ) );
+}
+
+//----------------------------------------------------------------------------
+
+// Matrix-vector product
+void matrixVectorProduct(
+    double* y,       // out - m-element result vector
+    double* a,       // in  - mxn matrix (stored as 1-D array)
+    double* x,       // in  - n-element vector
+    int m,           // in  - row dimension of matrix, length of y
+    int n            // in  - col dimension of matrix, length of x
+    )
+{
+    for ( int i = 0; i < m; i++ )
+    {
+        double sum = 0.0;
+        for ( int j = 0; j < n; j++ ) sum += a[IDX(i,j,n)] * x[j];
+        y[i] = sum;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -75,20 +140,23 @@ void dumpVector(
 
 int main( int argc, char* argv[] )
 {
-    double tol = 1.0e-6;                     // allowable diff in e-value est
-    int maxIter = 500;                       // max number of iterations
-    int verbosity = 0;                       // verbosity output level
-    double* a;                               // matrix
-    double* x;                               // current est. of eigenvector
-    double* y;                               // new est. of eigenvector
-    int n;                                   // number of rows/cols in matrix
-    double lambda_old, lambda;               // old and new est. of e-value
-    double t1, t2, read_time, compute_time;  // timing variables
-    int numIter;                             // iteration counter
+    double tol = 1.0e-6;                // allowable diff in e-value est
+    int verbosity = 0;                  // verbosity output level
+    int max_iter = 500;                 // maximum number of iterations
+    int num_iter = 0;                   // number of iterations done
+    double* A = NULL;                   // matrix
+    double* x = NULL;                   // current estimate of eigenvector
+    double* y = NULL;                   // new estimage of eigenvector
+    int nrow, ncol, n;                  // number of rows/cols in matrix
+    double lambda_prev, lambda;         // old and new estimates of e-value
+    double delta;                       // difference in eigenvector estimates
+    double vector_mag;                  // vector magnitude (L2-norm)
+    double t1, t2;                      // timing variables
+    double read_time, compute_time;     // elapsed read and compute times
 
-    // Process command line
+    // process command line options
     int opt;
-    while ( ( opt = getopt( argc, argv, "ve:m:" ) ) != -1 )
+    while ( ( opt = getopt( argc, argv, "e:m:v" ) ) != -1 )
     {
         switch ( opt )
         {
@@ -96,136 +164,115 @@ int main( int argc, char* argv[] )
                 tol = atof( optarg );
                 break;
             case 'm':
-                maxIter = atoi( optarg );
+                max_iter = atoi( optarg );
                 break;
             case 'v':
                 verbosity++;
                 break;
             default:
                 usage( argv[0] );
-                return EXIT_FAILURE;
+                exit( EXIT_FAILURE );
         }
     }
-    argv[optind - 1] = argv[0];
-    argc -= ( optind - 1 );
-    argv += ( optind - 1 );
 
-    // Validate parameters that may have been changed on command line
+    // validate parameters that may have been changed on command line
     if ( tol <= 0.0 )
     {
         fprintf( stderr, "tolerance must be positive\n" );
         exit( EXIT_FAILURE );
     }
-    if ( maxIter <= 0 )
+    if ( max_iter <= 0 )
     {
         fprintf( stderr, "maximum iterations must be positive\n" );
         exit( EXIT_FAILURE );
     }
 
-    // Make sure we've got a filename argument
+    // remove command line options from argument list
+    argv[optind - 1] = argv[0];
+    argc -= ( optind - 1 );
+    argv += ( optind - 1 );
+
+    // make sure we've got a filename argument
     if ( argc != 2 )
     {
         usage( argv[0] );
         return EXIT_FAILURE;
     }
 
+    // report command line parameters
     if ( verbosity > 0 )
     {
         printf( "tolerance = %e\n", tol );
-        printf( "maximum number of iterations = %d\n", maxIter );
+        printf( "maximum number of iterations = %d\n", max_iter );
     }
 
-    // Read matrix data
+    // read matrix data from HDF5 file
+    t1 = wtime();
+    readMatrix( argv[1], "/A/value", &A, &nrow, &ncol );
+    t2 = wtime();
+    read_time = t2 - t1;
+    n = nrow;
+
+    // make sure matrix is square
+    if ( nrow != ncol )
     {
-        int nrow, ncol;
-        t1 = wtime();
-        readMatrix( argv[1], "/A/value", &a, &nrow, &ncol );
-        t2 = wtime();
-        read_time = t2 - t1;
-
-        if ( nrow != ncol )
-        {
-            fprintf( stderr, "matrix must be square: rows = %d, cols = %d\n",
-                     nrow, ncol );
-            exit( EXIT_FAILURE );
-        }
-        n = nrow;
-        if ( verbosity > 2 )
-        {
-            printf( "Matrix A:\n" );
-            dumpMatrix( a, nrow, ncol, ncol );
-        }
+        fprintf( stderr, "matrix must be square: rows = %d, cols = %d\n",
+                 nrow, ncol );
+        return EXIT_FAILURE;
     }
+    if ( verbosity > 2 ) dumpMatrix( A, n, n, n );
 
-    // Allocate memory for previous and current eigenvector vector estimates
+    // allocate memory for current and previous eigenvector vector estimates
     x = new double [n];
     y = new double [n];
 
-    // Initialize estimate of eigenvector
-    for ( int i = 0; i < n; i++ ) x[i] = 1.0;
+    // initialize estimate of eigenvector
+    for ( int i = 0; i < n; i++ ) x[i] = 1.0 / sqrt( n );
 
-    // Main power method loop
+    // main power method loop
     lambda = 0.0;
-    lambda_old = lambda + 2.0 * tol;
-    numIter = 0;
+    lambda_prev = lambda + 2.0 * tol;
+    num_iter = 0;
+    delta = fabs( lambda - lambda_prev );
     t1 = wtime();
-    while ( fabs( lambda - lambda_old ) > tol && numIter <= maxIter )
+    while ( delta > tol && num_iter++ < max_iter )
     {
-        // normalize x
-        double xscale = 0.0;
-        for ( int i = 0; i < n; i++ ) xscale += x[i] * x[i];
-        xscale = sqrt( xscale );
-        for ( int i = 0; i < n; i++ ) x[i] /= xscale;
+        // compute new eigenvector estimate y := A*x
+        matrixVectorProduct( y, A, x, n, n );
 
-        // compute y := A*x
-        for ( int i = 0; i < n; i++ )
-        {
-            double sum = 0.0;
-            for ( int j = 0; j < n; j++ )
-            {
-                sum += x[j] * a[IDX(i,j,n)];
-            }
-            y[i] = sum;
-        }
+        // compute new estimate of eigenvalue and save eigenvector estimate
+        lambda_prev = lambda;
+        lambda = dotProduct( x, y, n );
+        delta = fabs( lambda - lambda_prev );
+        copyVector( x, y, n );
 
-        // compute estimate of eigenvalue and copy vector y in to x
-        lambda_old = lambda;
-        lambda = 0.0;
-        for ( int i = 0; i < n; i++ )
-        {
-            lambda += y[i] * x[i];
-            x[i] = y[i];
-        }
+        // normalize eigenvector
+        vector_mag = vectorNorm( x, n );
+        scaleVector( 1.0 / vector_mag, x, n );
 
-        numIter++;
-
+        // display status if requested
         if ( verbosity > 2 ) dumpVector( x, n );
-
-        if ( verbosity > 1 )
-        {
-            printf( "k = %d: lambda = %f, diff = %e\n",
-                    numIter, lambda, fabs( lambda - lambda_old ) );
-        }
+        if ( verbosity > 1 ) printf( "k = %d: lambda = %f, diff = %e\n",
+                                     num_iter, lambda, delta );
     }
     t2 = wtime();
     compute_time = t2 - t1;
 
-    // Report
-    if ( numIter > maxIter )
+    // report
+    if ( num_iter > max_iter )
     {
         fprintf( stderr, "*** WARNING ****: " );
         fprintf( stderr, "maximum number of iterations exceeded\n" );
     }
 
-    printf( "magnitude of eigenvalue = %f found in %d iterations\n",
-            lambda, numIter );
-    printf( "elapsed read time    = %10.6f seconds\n", read_time );
-    printf( "elapsed compute time = %10.6f seconds\n", compute_time );
+    printf( "eigenvalue = %f found in %d iterations\n", lambda, num_iter );
+    printf( "elapsed HDF5 read time  = %9.6f seconds\n", read_time );
+    printf( "elapsed compute time    = %9.6f seconds\n", compute_time );
 
-    // All done, cleanup and quit
+    // all done, cleanup and quit
     delete [] x;
     delete [] y;
-    delete [] a;
+    delete [] A;
 
     return 0;
 }
