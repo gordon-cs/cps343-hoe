@@ -5,18 +5,21 @@ CXXFLAGS:= $(CFLAGS)
 
 CCSRCS	:= pm_seq.cc
 
-OBJS	:= wtime.o readMatrixSeq.o $(CCSRCS:.cc=.o)
+OBJS	:= $(CCSRCS:.cc=.o) readMatrixSeq.o wtime.o
 BINS	:= $(CCSRCS:.cc=)
-LDLIBS	:= -L$(shell echo $(LIBRARY_PATH) | sed -e 's/:/\n/g' | grep pgi) -lhdf5
+LDLIBS	:= -L$(shell echo $(LIBRARY_PATH)|sed -e 's/:/\n/g'|grep pgi) -lhdf5
 
 .PHONY:		all
 all: $(BINS)
 
-pm_seq:		pm_seq.cc wtime.o readMatrixSeq.o
+pm_seq:			pm_seq.o wtime.o readMatrixSeq.o
+	$(LINK.cc) $^ $(LOADLIBS) $(LDLIBS) -o $@
 
-wtime.o:		wtime.c wtime.h
+pm_seq.o:		pm_seq.cc wtime.h
 
 readMatrixSeq.o:	readMatrixSeq.cc
+
+wtime.o:		wtime.c wtime.h
 
 .PHONY:		clean clobber
 clean clobber:
