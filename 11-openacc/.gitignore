@@ -1,3 +1,1 @@
-pm_acc_kernels.cc
-pm_acc_loop.cc
-pm_seq_new.cc
+pm_seq
