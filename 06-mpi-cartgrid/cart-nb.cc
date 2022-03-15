@@ -348,7 +348,8 @@ int main( int argc, char *argv[] )
     MPI_Waitall( 4, recv_req, MPI_STATUSES_IGNORE );
 
     /*******************************************************************
-     * Here we can do work that can be done once the exchange is done. *
+     * Here we can do any remaining work that can be done once the     *
+     * exchange of halo data is done.                                  *
      *******************************************************************/
 
     // Exchange cycle is complete.  Wait for my turn and then display
