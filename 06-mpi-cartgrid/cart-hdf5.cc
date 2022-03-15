@@ -428,6 +428,11 @@ int main( int argc, char *argv[] )
     }
     dump_grid_rank_order( u, &halo_grid, num_proc, rank, comm2d );
 
+    // Write grid data to HDF5 file
+
+    writeFile( "cart-hdf5.dat", "/grid", u, NX, NY, &orig_grid, &halo_grid,
+               comm2d );
+
     // Release memory and datatypes and then quit
 
     delete [] u[0];
