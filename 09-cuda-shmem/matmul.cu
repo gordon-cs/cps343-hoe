@@ -1,4 +1,4 @@
-// $Smake: nvcc -Xptxas -v -arch=sm_30 -O2 -o %F %f wtime.c
+// $Smake: nvcc -Xptxas -v -O2 -o %F %f wtime.c
 //
 // Demonstrates use of device shared memory in matrix-matrix multiplication.
 //

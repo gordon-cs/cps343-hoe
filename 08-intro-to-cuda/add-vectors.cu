@@ -1,4 +1,4 @@
-// $Smake: nvcc -arch=sm_30 -O2 -o %F %f
+// $Smake: nvcc -O2 -o %F %f
 //
 // add-vectors.cu - addition of two arrays on GPU device
 //

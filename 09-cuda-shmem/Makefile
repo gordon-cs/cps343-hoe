@@ -10,7 +10,7 @@
 CC	:= gcc
 NVCC	:= nvcc
 OPTFLAGS:= -O2
-NVFLAGS	:= -Xptxas -v -arch=sm_30
+NVFLAGS	:= -Xptxas -v
 CFLAGS	:= $(OPTFLAGS)
 
 # List of sources and files to build from them
