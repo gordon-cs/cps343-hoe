@@ -1,5 +1,5 @@
 /*
- * $Smake: mpic++ -DSHOW_TIMING_DATA -Wall -O2 -o %F %f
+ * $Smake: mpic++ -DSHOW_TIMING_DATA -Ofast -o %F %f
  *
  * Copyright (c) 2010 Jonathan Senning <jonathan.senning@gordon.edu.
  * Department of Mathematics and Computer Science
@@ -107,7 +107,7 @@ int psrsSort( int* inList, int inLen, int* outList, int* outLen, int master,
     // sort original list
     double t0 = MPI_Wtime();
     qsort( inList, inLen, sizeof(int), cmp );
-    double time_qsort1 = MPI_Wtime() - t0;
+    double time_sort1 = MPI_Wtime() - t0;
 
     // collect set of regularly-spaced samples from sorted list and
     // gather the samples from all processes on master process in array
@@ -179,17 +179,17 @@ int psrsSort( int* inList, int inLen, int* outList, int* outLen, int master,
     // finally, sort received data
     t0 = MPI_Wtime();
     qsort( outList, *outLen, sizeof(int), cmp );
-    double time_qsort2 = MPI_Wtime() - t0;
+    double time_sort2 = MPI_Wtime() - t0;
 
     // compute elapsed communication and sorting time
     double tcomm = time_gather+time_broadcast+time_allgather+time_sendrecv;
-    double tcomp = time_qsort1 + time_qsort2 + time_split;
+    double tcomp = time_sort1 + time_sort2 + time_split;
     double ratio = tcomm / ( tcomm + tcomp );
 #if defined(SHOW_TIMING_DATA)
     printf( "%4d %8.5f %8.5f %8.5f %8.5f | %8.5f %8.5f %8.5f | %7.4f\n",
             rank,
             time_gather, time_broadcast, time_allgather, time_sendrecv,
-            time_qsort1, time_split, time_qsort2, ratio );
+            time_sort1, time_split, time_sort2, ratio );
 #endif
     
     return 0;
@@ -251,7 +251,7 @@ int main( int argc, char* argv[] )
         printf( "                broad-     all-            " );
         printf( "    pre-   split-    post-      comm\n" );
         printf( "rank   gather     cast   gather sendrecv   " );
-        printf( "   qsort     list    qsort     fract\n" );
+        printf( "    sort     list     sort     fract\n" );
         printf( "---- -------- -------- -------- --------   " );
         printf( "-------- -------- --------   -------\n" );
     }
@@ -271,7 +271,6 @@ int main( int argc, char* argv[] )
     {
 	for ( int r = 0; r < size; r++ )
 	{
-	    MPI_Barrier( MPI_COMM_WORLD );
 	    if ( rank == r )
 	    {
 		for ( int i = 0; i < outLen; i++ )
@@ -279,6 +278,7 @@ int main( int argc, char* argv[] )
                     printf( "rank %2d: list[%3d] = %12d\n",
                             rank, i, outList[i] );
 		}
+                fflush( stdout );
 	    }
 	    MPI_Barrier( MPI_COMM_WORLD );
 	}
