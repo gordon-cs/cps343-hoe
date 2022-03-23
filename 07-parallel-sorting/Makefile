@@ -1,5 +1,5 @@
 CXX	:= mpic++
-CXXFLAGS:= -Ofast -DSHOW_TIMING_DATA
+CXXFLAGS:= -O3 -DSHOW_TIMING_DATA
 LDLIBS	:=
 
 # Project files

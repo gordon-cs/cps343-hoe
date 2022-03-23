@@ -1,5 +1,5 @@
 /*
- * $Smake: mpic++ -DSHOW_TIMING_DATA -Ofast -o %F %f
+ * $Smake: mpic++ -DSHOW_TIMING_DATA -O3 -o %F %f
  *
  * Copyright (c) 2010 Jonathan Senning <jonathan.senning@gordon.edu.
  * Department of Mathematics and Computer Science
