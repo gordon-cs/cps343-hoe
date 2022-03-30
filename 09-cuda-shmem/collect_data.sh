@@ -1,5 +1,6 @@
 #!/bin/bash
 
+PATH=/shared/cuda-samples/bin/x86_64/linux/release:$PATH
 arch=$(deviceQuery | grep "Device 0" | cut -d: -f2 | sed -e 's/[ "]//g')
 types="Global Shared"
 sizes="08 16 32"

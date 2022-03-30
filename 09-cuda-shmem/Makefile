@@ -9,7 +9,7 @@
 # Define variables
 CC	:= gcc
 NVCC	:= nvcc
-OPTFLAGS:= -O2
+OPTFLAGS:= -O3
 NVFLAGS	:= -Xptxas -v
 CFLAGS	:= $(OPTFLAGS)
 

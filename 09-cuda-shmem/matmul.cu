@@ -16,7 +16,7 @@
 #if !defined(BS)
 const int BlockDim = 16;
 #else
-const int BlockDim = BS;  // normally 32 or less
+const int BlockDim = BS;  // needs to be 32 or less
 #endif
 
 const int MaxSizeToDisplay = 25;
@@ -29,17 +29,17 @@ typedef float FLOAT;
 // Matrix-matrix kernel (global memory)
 __global__ void matmulGlobal( FLOAT* c, FLOAT* a, FLOAT* b, int n )
 {
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    if ( col < n && row < n )
+    // element of matrix c to compute
+    const int col = blockIdx.x * blockDim.x + threadIdx.x;
+    const int row = blockIdx.y * blockDim.y + threadIdx.y;
+    if ( col >= n || row >= n ) return;
+
+    FLOAT sum = (FLOAT) 0.0;
+    for ( int k = 0; k < n; k++ )
     {
-	FLOAT sum = 0.0;
-	for ( int k = 0; k < n; k++ )
-	{
-	    sum += a[IDX(row,k,n)] * b[IDX(k,col,n)];
-	}
-	c[IDX(row,col,n)] = sum;
+        sum += a[IDX(row,k,n)] * b[IDX(k,col,n)];
     }
+    c[IDX(row,col,n)] = sum;
 }
 
 //----------------------------------------------------------------------------
@@ -47,39 +47,43 @@ __global__ void matmulGlobal( FLOAT* c, FLOAT* a, FLOAT* b, int n )
 // Matrix-matrix kernel (shared memory)
 __global__ void matmulShared( FLOAT* c, FLOAT* a, FLOAT* b, int n )
 {
+    __shared__ FLOAT a_s[BlockDim][BlockDim];
+    __shared__ FLOAT b_s[BlockDim][BlockDim];
+
     // element of matrix c to compute
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
+    if ( col >= n || row >= n ) return;
 
     // loop over blocks from block row of matrix a and
     // block column of matrix b.
-    FLOAT sum = 0.0;
-    int numBlocks = ( n + BlockDim - 1 ) / BlockDim;
+    FLOAT sum = (FLOAT) 0.0;
+    const int numBlocks = ( n + BlockDim - 1 ) / BlockDim;
     for ( int m = 0; m < numBlocks; m++ )
     {
-	// copy block from matrix to shared memory
-	__shared__ FLOAT a_s[BlockDim][BlockDim];
-	__shared__ FLOAT b_s[BlockDim][BlockDim];
-	int c = m * BlockDim + threadIdx.x;
-	int r = m * BlockDim + threadIdx.y;
-	a_s[threadIdx.y][threadIdx.x] = a[IDX(row,c,n)];
-	b_s[threadIdx.y][threadIdx.x] = b[IDX(r,col,n)];
-	__syncthreads();
+        // copy block from matrix to shared memory
+        int c = m * BlockDim + threadIdx.x;
+        int r = m * BlockDim + threadIdx.y;
+        c = c < n ? c : n - 1; // need to stay inbounds
+        r = r < n ? r : n - 1;
+        a_s[threadIdx.y][threadIdx.x] = a[IDX(row,c,n)];
+        b_s[threadIdx.y][threadIdx.x] = b[IDX(r,col,n)];
+        __syncthreads();
 
-	// length of this part of row-column product is BlockDim
-	// except for last block when it may be smaller
-	int sliceLen = ( m == numBlocks - 1 ? n - m * BlockDim : BlockDim );
+        // length of this part of row-column product is BlockDim
+        // except for last block when it may be smaller
+        const int len = ( m == numBlocks - 1 ? n - m * BlockDim : BlockDim );
 
-	// compute this part of row-column product
-	for ( int k = 0; k < sliceLen; k++ )
-	{
-	    sum += a_s[threadIdx.y][k] * b_s[k][threadIdx.x];
-	}
-	__syncthreads();
+        // compute this part of row-column product
+        for ( int k = 0; k < len; k++ )
+        {
+            sum += a_s[threadIdx.y][k] * b_s[k][threadIdx.x];
+        }
+        __syncthreads();
     }
 
     // all done; store computed element in matrix c
-    if ( col < n && row < n ) c[IDX(row,col,n)] = sum;
+    c[IDX(row,col,n)] = sum;
 }
 
 //-----------------------------------------------------------------------------
@@ -97,14 +101,14 @@ void cudaChkErr( cudaError_t code )
 //----------------------------------------------------------------------------
 
 // Fill matrix with reasonable values
-void initializeMatrix( FLOAT* a, int m, int n )
+void initializeMatrix( FLOAT* a, int m, int n, FLOAT sf = 1.0 )
 {
     for ( int i = 0; i < m; i++ )
     {
-	for ( int j = 0; j < n; j++ )
-	{
-	    a[IDX(i,j,n)] = -1.0 * i + j;
-	}
+        for ( int j = 0; j < n; j++ )
+        {
+            a[IDX(i,j,n)] = sf * (-1.0 * i + j);
+        }
     }
 }
 
@@ -115,12 +119,12 @@ void dumpMatrix( FLOAT* a, int m, int n )
 {
     for ( int i = 0; i < m; i++ )
     {
-	printf( "[" );
-	for ( int j = 0; j < n; j++ )
-	{
-	    printf( " %8.2f", a[IDX(i,j,n)] );
-	}
-	printf( "]\n" );
+        printf( "[" );
+        for ( int j = 0; j < n; j++ )
+        {
+            printf( " %8.2f", a[IDX(i,j,n)] );
+        }
+        printf( "]\n" );
     }
 }
 
@@ -144,14 +148,14 @@ int main( int argc, char* argv[] )
     FLOAT* c = new FLOAT [n * n];  // C = A * B
 
     // Initialize and display matrices (if small enough)
-    initializeMatrix( a, n, n );
-    initializeMatrix( b, n, n );
+    initializeMatrix( a, n, n, 1.0 );
+    initializeMatrix( b, n, n, 2.0 );
     if ( n <= MaxSizeToDisplay )
     {
-	printf( "A =\n" );
-	dumpMatrix( a, n, n );
-	printf( "\nB =\n" );
-	dumpMatrix( b, n, n );
+        printf( "A =\n" );
+        dumpMatrix( a, n, n );
+        printf( "\nB =\n" );
+        dumpMatrix( b, n, n );
     }
 
     // Declare and allocate memory for matrices on device
@@ -159,9 +163,9 @@ int main( int argc, char* argv[] )
     FLOAT* a_d;  // device memory for first factor
     FLOAT* b_d;  // device memory for second factor
     FLOAT* c_d;  // device memory for product
-    cudaChkErr( cudaMalloc( (void**) &a_d, matrixSize ) );
-    cudaChkErr( cudaMalloc( (void**) &b_d, matrixSize ) );
-    cudaChkErr( cudaMalloc( (void**) &c_d, matrixSize ) );
+    cudaChkErr( cudaMalloc( &a_d, matrixSize ) );
+    cudaChkErr( cudaMalloc( &b_d, matrixSize ) );
+    cudaChkErr( cudaMalloc( &c_d, matrixSize ) );
 
     // Initialize matrices on device
     t0 = wtime();
@@ -173,7 +177,7 @@ int main( int argc, char* argv[] )
     // Prepare for kernel launches: use 2D grid
     dim3 blockDim( BlockDim, BlockDim );
     dim3 gridDim( ( n + blockDim.x - 1 ) / blockDim.x,
-		  ( n + blockDim.y - 1 ) / blockDim.y ); 
+                  ( n + blockDim.y - 1 ) / blockDim.y ); 
 
     // Compute product using global-memory-only kernel
     t0 = wtime();
@@ -190,8 +194,8 @@ int main( int argc, char* argv[] )
     data_transfer_time += ( t1 - t0 );
     if ( n <= MaxSizeToDisplay )
     {
-	printf( "\n(Global Memory Only) A*B =\n" );
-	dumpMatrix( c, n, n );
+        printf( "\n(Global Memory Only) A*B =\n" );
+        dumpMatrix( c, n, n );
     }
 
     // Compute product using shared-memory kernel
@@ -206,8 +210,8 @@ int main( int argc, char* argv[] )
     cudaChkErr( cudaMemcpy( c, c_d, matrixSize, cudaMemcpyDeviceToHost ) );
     if ( n <= MaxSizeToDisplay )
     {
-	printf( "\n(with shared memory) A*B =\n" );
-	dumpMatrix( c, n, n );
+        printf( "\n(with shared memory) A*B =\n" );
+        dumpMatrix( c, n, n );
     }
 
     // Report times and speedup
