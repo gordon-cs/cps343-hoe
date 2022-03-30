@@ -1,5 +1,5 @@
-CC	:= pgcc
-CXX	:= pgc++
+CC	:= nvc
+CXX	:= nvc++
 CFLAGS	:= -fast
 CXXFLAGS:= $(CFLAGS)
 
@@ -7,7 +7,7 @@ CCSRCS	:= pm_seq.cc
 
 OBJS	:= $(CCSRCS:.cc=.o) readMatrixSeq.o wtime.o
 BINS	:= $(CCSRCS:.cc=)
-LDLIBS	:= -L$(shell echo $(LIBRARY_PATH)|sed -e 's/:/\n/g'|grep pgi) -lhdf5
+LDLIBS	:= -lhdf5
 
 .PHONY:		all
 all: $(BINS)
