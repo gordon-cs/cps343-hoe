@@ -1,3 +1,5 @@
 matmul08
 matmul16
 matmul32
+Global.*
+Shared.*

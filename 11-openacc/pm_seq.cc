@@ -1,5 +1,5 @@
 /*
- * $Smake: pgc++ -fast -o %F %f wtime.c readMatrixSeq.cc -L$LIBRARY_PATH -lhdf5
+ * $Smake: nvc++ -fast -o %F %f wtime.c readMatrixSeq.cc -lhdf5
  *
  * Power Method
  */
@@ -119,11 +119,11 @@ double vectorNorm(
 
 // Matrix-vector product
 void matrixVectorProduct(
-    double* y,       // out - m-element result vector
-    double* a,       // in  - mxn matrix (stored as 1-D array)
-    double* x,       // in  - n-element vector
-    int m,           // in  - row dimension of matrix, length of y
-    int n            // in  - col dimension of matrix, length of x
+    double* y,          // out - m-element result vector
+    double* a,          // in  - mxn matrix (stored as 1-D array)
+    double* x,          // in  - n-element vector
+    int m,              // in  - row dimension of matrix, length of y
+    int n               // in  - col dimension of matrix, length of x
     )
 {
     for ( int i = 0; i < m; i++ )
