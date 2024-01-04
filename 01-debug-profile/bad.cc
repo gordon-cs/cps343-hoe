@@ -12,7 +12,7 @@
 
 #include <cstdio>
 
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
     const int N = 5;
 
@@ -20,7 +20,7 @@ int main( int argc, char *argv[] )
 
     double** a = new double* [N];   // memory for array of row pointers
     a[0] = new double [N * N];      // memory for array
-    for ( int i = 1; i < N; i++ )
+    for (int i = 1; i < N; i++)
     {
         a[i] = &a[0][i * N];        // assign row pointers
     }
@@ -32,21 +32,21 @@ int main( int argc, char *argv[] )
 
     // initalize array and vector
 
-    for ( int i = 0; i <= N; i++ )
+    for (int i = 0; i <= N; i++)
     {
-        for ( int j = 0; j < N; j++ )
+        for (int j = 0; j < N; j++)
         {
-            a[i][j] = 10.0 * ( i + 1 ) + j;
+            a[i][j] = 10.0 * (i + 1) + j;
         }
-        x[i] = 5.0 * ( i + 1 );
+        x[i] = 5.0 * (i + 1);
     }
 
     // compute product y = Ax
 
-    for ( int i = 0; i < N; i++ )
+    for (int i = 0; i < N; i++)
     {
         y[i] = 0.0;
-        for ( int j = 0; j <= N; j++ )
+        for (int j = 0; j <= N; j++)
         {
             y[i] += a[i][j] * x[j];
         }
@@ -54,16 +54,16 @@ int main( int argc, char *argv[] )
 
     // display results
 
-    for ( int i = 0; i < N; i++ )
+    for (int i = 0; i < N; i++)
     {
-        printf( "[" );
-        for ( int j = 0; j < N; j++ )
+        printf("[");
+        for (int j = 0; j < N; j++)
         {
-            printf( " %4.1f", a[i][j] );
+            printf(" %4.1f", a[i][j]);
         }
-        printf( "] [ %4.1f] ", x[i] );
-        printf( i == N / 2 ? "=" : " " );
-        printf( " [ %6.1f]\n", y[i] );
+        printf("] [ %4.1f] ", x[i]);
+        printf(i == N / 2 ? "=" : " ");
+        printf(" [ %6.1f]\n", y[i]);
     }
 
     // release memory
