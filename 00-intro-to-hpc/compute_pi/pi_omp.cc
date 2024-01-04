@@ -20,16 +20,16 @@
 
 // Evalute the integral of 4/(1+x^2) on [a,b] using the midpoint rule.
 
-double integrate( double a, double b, long n )
+double integrate(double a, double b, long n)
 {
-    const double dx = ( b - a ) / double( n );
+    const double dx = (b - a) / double(n);
     double sum = 0.0;
 
     #pragma omp parallel for default(shared) reduction(+:sum)
-    for ( long i = 0; i < n; i++ )
+    for (long i = 0; i < n; i++)
     {
-        double x = a + ( i + 0.5 ) * dx;
-        sum += 4.0 / ( 1.0 + x * x );
+        double x = a + (i + 0.5) * dx;
+        sum += 4.0 / (1.0 + x * x);
     }
     return sum * dx;
 }
@@ -37,7 +37,7 @@ double integrate( double a, double b, long n )
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
     using namespace std;
     const long num_intervals = 400000000L;
@@ -50,19 +50,19 @@ int main( int argc, char* argv[] )
     // compute pi
 
     t1 = omp_get_wtime();
-    pi = integrate( a, b, num_intervals );
+    pi = integrate(a, b, num_intervals);
     t2 = omp_get_wtime();
 
     // display result
 
     const int opsPerStep = 7;
-    double gflops = opsPerStep * ( num_intervals / ( t2 - t1 ) ) / 1.0e+9;
+    double gflops = opsPerStep * (num_intervals / (t2 - t1)) / 1.0e+9;
 
-    cout.precision( 16 );
+    cout.precision(16);
     cout << "pi = " << pi;
-    cout.precision( 4 );
+    cout.precision(4);
     cout << " computed in " << t2 - t1 << " seconds; rate = "
-         << gflops << " GFLOPS" << endl;
+         << gflops << " GFlop/s" << endl;
 
     // all done
 
