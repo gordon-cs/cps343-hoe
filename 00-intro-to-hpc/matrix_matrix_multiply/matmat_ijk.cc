@@ -19,6 +19,7 @@
 #endif
 
 #define IDX(i,j,stride) ((i)*(stride)+(j)) // row-major
+//#define IDX(i,j,stride) ((i)+(stride)*j) // columm major
 
 //----------------------------------------------------------------------------
 // Returns the number of seconds since some fixed arbitrary time in the past

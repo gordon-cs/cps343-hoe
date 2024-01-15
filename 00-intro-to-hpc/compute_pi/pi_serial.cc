@@ -39,7 +39,7 @@ double integrate(double a, double b, long n)
 int main(int argc, char* argv[])
 {
     using namespace std;
-    const long num_intervals = 400000000L;
+    const long num_intervals = 8000000000L;
     const double a = 0.0;
     const double b = 1.0;
 
