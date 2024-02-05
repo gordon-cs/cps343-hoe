@@ -23,7 +23,7 @@ const int    N_MAX = 10;
 const double X_MIN =  1.0;
 const double X_MAX = 20.0;
 
-int main( int argc, char **argv )
+int main(int argc, char **argv)
 {
     int    n = 1;     /* default value */
     double x = 1.0;   /* default value */
@@ -32,41 +32,41 @@ int main( int argc, char **argv )
     /*
      * we require two arguments on command line (argv[0] is program name)
      */
-    if ( argc < 3 )
+    if (argc < 3)
     {
-        fprintf( stderr, "usage: %s N X\n", argv[0] );
-        exit( EXIT_FAILURE );
+        fprintf(stderr, "usage: %s N X\n", argv[0]);
+        exit(EXIT_FAILURE);
     }
-    n = atoi( argv[1] );
-    x = atof( argv[2] );
+    n = atoi(argv[1]);
+    x = atof(argv[2]);
 #else
     /*
      * both arguments are optional but if x is specified n must also appear
      */
-    if ( argc > 1 ) n = atoi( argv[1] );
-    if ( argc > 2 ) x = atof( argv[2] );
+    if (argc > 1) n = atoi(argv[1]);
+    if (argc > 2) x = atof(argv[2]);
 #endif
 
     /*
      * make sure input is valid
      */
-    if ( n < N_MIN || N_MAX <= n )
+    if (n < N_MIN || N_MAX <= n)
     {
-        fprintf( stderr, "n = %d but must satisfy %d <= n < %d\n", 
-                 n, N_MIN, N_MAX );
-        exit( EXIT_FAILURE );
+        fprintf(stderr, "n = %d but must satisfy %d <= n < %d\n", 
+                n, N_MIN, N_MAX);
+        exit(EXIT_FAILURE);
     }
-    if ( x < X_MIN || X_MAX < x )
+    if (x < X_MIN || X_MAX < x)
     {
-        fprintf( stderr, "x = %f but must satisfy %f <= n <= %f\n",
-                 x, X_MIN, X_MAX );
-        exit( EXIT_FAILURE );
+        fprintf(stderr, "x = %f but must satisfy %f <= n <= %f\n",
+                x, X_MIN, X_MAX);
+        exit(EXIT_FAILURE);
     }
 
     /*
      * okay, we're good to go!
      */
-    printf( "n = %d, x = %f\n", n, x );
+    printf("n = %d, x = %f\n", n, x);
 
     return 0;
 }
