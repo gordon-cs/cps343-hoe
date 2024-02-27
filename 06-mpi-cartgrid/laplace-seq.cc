@@ -45,7 +45,7 @@ void init_grid(
     double* u   // grid data
     )
 {
-    for ( int i = 0; i < nx * ny; i++ ) u[i] = 0.0;
+    for (int i = 0; i < nx * ny; i++) u[i] = 0.0;
 }
 
 //---------------------------------------------------------------------------
@@ -60,17 +60,17 @@ void impose_boundary_conditions(
     )
 {
     // set top and bottom boundary values
-    for ( int i = 0; i < nx; i++ )
+    for (int i = 0; i < nx; i++)
     {
-        double x = x0 + ( xn - x0 ) * i / ( nx - 1 );
+        double x = x0 + (xn - x0) * i / (nx - 1);
         u[IDX(i,0)]    = 0.0;                    // f(x,y0)
-        u[IDX(i,ny-1)] = 1.0 + x * ( 1.0 - x );  // f(x,y1)
+        u[IDX(i,ny-1)] = 1.0 + x * (1.0 - x);  // f(x,y1)
     }
 
     // set left and right boundary values
-    for ( int j = 0; j < ny; j++ )
+    for (int j = 0; j < ny; j++)
     {
-        double y = y0 + ( yn - y0 ) * j / ( ny - 1 );
+        double y = y0 + (yn - y0) * j / (ny - 1);
         u[IDX(0,j)]    = y;       // f(x0,y)
         u[IDX(nx-1,j)] = y * y;   // f(x1,y)
     }
@@ -86,12 +86,12 @@ void jacobi_sweep(
     int ny      // number of y grid points
     )
 {
-    for ( int i = 1; i < nx-1; i++ )
+    for (int i = 1; i < nx-1; i++)
     {
-        for ( int j = 1; j < ny-1; j++ )
+        for (int j = 1; j < ny-1; j++)
         {
-            v[IDX(i,j)] = ( u[IDX(i-1,j)] + u[IDX(i+1,j)]
-                            + u[IDX(i,j-1)] + u[IDX(i,j+1)] ) / 4.0;
+            v[IDX(i,j)] = (u[IDX(i-1,j)] + u[IDX(i+1,j)]
+                           + u[IDX(i,j-1)] + u[IDX(i,j+1)]) / 4.0;
         }
     }
 }
@@ -106,7 +106,7 @@ void update(
     int ny      // number of y grid points
     )
 {
-    for ( int i = 0; i < nx * ny; i++ ) v[i] = u[i];
+    for (int i = 0; i < nx * ny; i++) v[i] = u[i];
 }
 
 //---------------------------------------------------------------------------
@@ -120,11 +120,11 @@ double norm(
     )
 {
     double s = 0.0;
-    for ( int i = 1; i < nx-1; i++ )
+    for (int i = 1; i < nx-1; i++)
     {
-        for ( int j = 1; j < ny-1; j++ )
+        for (int j = 1; j < ny-1; j++)
         {
-            s += fabs( v[IDX(i,j)] - u[IDX(i,j)] );
+            s += fabs(v[IDX(i,j)] - u[IDX(i,j)]);
         }
     }
     return s;
@@ -137,14 +137,14 @@ void usage(
     char* program   //program name string
     )
 {
-    printf( "Usage: %s ", program );
-    printf( "[-n N] [-e TOL] [-m MAXITER] [-s ITERATION_STRIDE] [-v]\n" );
+    printf("Usage: %s ", program);
+    printf("[-n N] [-e TOL] [-m MAXITER] [-s ITERATION_STRIDE] [-v]\n");
 }
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
     int nx = DEFAULT_DIMENSION;
     int ny = DEFAULT_DIMENSION;
@@ -155,25 +155,25 @@ int main( int argc, char* argv[] )
 
     // Process command line
     int c;
-    while ( ( c = getopt( argc, argv, "e:hm:n:s:v" ) ) != -1 )
+    while ((c = getopt(argc, argv, "e:hm:n:s:v")) != -1)
     {
-        switch ( c )
+        switch (c)
         {
             case 'e':
-                tolerance = atof( optarg );
-                if ( tolerance <= 0.0 ) tolerance = DEFAULT_TOLERANCE;
+                tolerance = atof(optarg);
+                if (tolerance <= 0.0) tolerance = DEFAULT_TOLERANCE;
                 break;
             case 'n':
-                nx = ny = atoi( optarg );
-                if ( nx <= 0 ) nx = ny = DEFAULT_DIMENSION;
+                nx = ny = atoi(optarg);
+                if (nx <= 0) nx = ny = DEFAULT_DIMENSION;
                 break;
             case 'm':
-                max_iter = atoi( optarg );
-                if ( max_iter <= 0 ) max_iter = DEFAULT_ITERATIONS;
+                max_iter = atoi(optarg);
+                if (max_iter <= 0) max_iter = DEFAULT_ITERATIONS;
                 break;
             case 's':
-                iterations_between_checks = atoi( optarg );
-                if ( iterations_between_checks <= 0 )
+                iterations_between_checks = atoi(optarg);
+                if (iterations_between_checks <= 0)
                     iterations_between_checks = DEFAULT_ITERATION_STRIDE;
                 break;
             case 'v':
@@ -181,7 +181,7 @@ int main( int argc, char* argv[] )
                 break;
             case 'h':
             default:
-                usage( argv[0] );
+                usage(argv[0]);
                 return 0;
         }
     }
@@ -191,29 +191,29 @@ int main( int argc, char* argv[] )
     double* v = new double [nx * ny];
 
     // Prepare grid
-    init_grid( nx, ny, u );
-    impose_boundary_conditions( 0.0, 1.0, 0.0, 1.0, nx, ny, u );
-    update( v, u, nx, ny );
+    init_grid(nx, ny, u);
+    impose_boundary_conditions(0.0, 1.0, 0.0, 1.0, nx, ny, u);
+    update(v, u, nx, ny);
 
     // Do Jacobi iterations until convergence or too many iterations
     double t0 = wtime();
     int k = 0;
     double alpha = 2 * tolerance;
-    while ( k++ < max_iter && alpha > tolerance )
+    while (k++ < max_iter && alpha > tolerance)
     {
-        jacobi_sweep( v, u, nx, ny );
-        if ( k % iterations_between_checks == 0 )
+        jacobi_sweep(v, u, nx, ny);
+        if (k % iterations_between_checks == 0)
         {
-            alpha = norm( u, v, nx, ny );
-            if ( verbosity > 0 ) printf( "%6d %e\n", k, alpha );
+            alpha = norm(u, v, nx, ny);
+            if (verbosity > 0) printf("%6d %e\n", k, alpha);
         }
-        update( u, v, nx, ny );
+        update(u, v, nx, ny);
     }
     double t1 = wtime();
 
     // Report results
-    printf( "Iterations: %d  Difference Norm: %12.6e  ", --k, alpha );
-    printf( "Time: %f seconds\n", t1 - t0 );
+    printf("Iterations: %d  Difference Norm: %12.6e  ", --k, alpha);
+    printf("Time: %f seconds\n", t1 - t0);
 
     // All done - clean up and exit
     delete [] u;

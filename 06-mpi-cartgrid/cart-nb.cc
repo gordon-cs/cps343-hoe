@@ -5,7 +5,7 @@
  * Written: August 2012.
  * Revised: April 2013, March 2016, March 2018, March 2020.
  *
- * $Smake: mpic++ -Wall -O2 -o %F %f -lhdf5
+ * $Smake: mpic++ -Wall -O2 -o %F %f
  *
  * This program demonstrates how to set up and use a Cartesian grid when data
  * along the boundary between neighboring regions must be exchanged.  It also
@@ -103,16 +103,16 @@
  * Output:
  *   None, other than output to stdout.
  */
-void show_grid( double** v, int nx, int ny )
+void show_grid(double** v, int nx, int ny)
 {
-    printf( "--------------------------------------------------------\n" );
-    for ( int j = ny - 1; j >= 0; j-- )
+    printf("--------------------------------------------------------\n");
+    for (int j = ny - 1; j >= 0; j--)
     {
-        for ( int i = 0; i < nx; i++ ) printf( " %6.4f", v[i][j] );
-        printf( "\n" );
+        for (int i = 0; i < nx; i++) printf(" %6.4f", v[i][j]);
+        printf("\n");
     }
-    printf( "--------------------------------------------------------\n" );
-    fflush( stdout );
+    printf("--------------------------------------------------------\n");
+    fflush(stdout);
 }
 
 /*----------------------------------------------------------------------------
@@ -128,19 +128,19 @@ void show_grid( double** v, int nx, int ny )
  * Output:
  *   None, other than output to stdout.
  */
-void dump_grid_rank_order( double** u, Cartesian_Block* halo_grid,
-                           int num_proc, int rank, MPI_Comm comm )
+void dump_grid_rank_order(double** u, Cartesian_Block* halo_grid,
+                          int num_proc, int rank, MPI_Comm comm)
 {
-    for ( int i = 0; i < num_proc; i++ )
+    for (int i = 0; i < num_proc; i++)
     {
-        if ( rank == i )
+        if (rank == i)
         {
-            printf( "Rank: %d\n", rank );
-            show_grid( u, halo_grid->nx, halo_grid->ny );
+            printf("Rank: %d\n", rank);
+            show_grid(u, halo_grid->nx, halo_grid->ny);
         }
         // Use barrier and delay so output comes out in process rank order
-        MPI_Barrier( comm );
-        usleep( 10000 ); // 0.01 sec
+        MPI_Barrier(comm);
+        usleep(10000); // 0.01 sec
     }
     
 }
@@ -160,53 +160,53 @@ void dump_grid_rank_order( double** u, Cartesian_Block* halo_grid,
  * Output:
  *   double** u            - 2-D array holding grid block with update halo
  */
-void exchange_halo_data( double** u, Cartesian_Block* grid,
-                         MPI_Datatype x_slice, MPI_Datatype y_slice,
-                         MPI_Comm comm,
-                         MPI_Request* send_req, MPI_Request* recv_req )
+void exchange_halo_data(double** u, Cartesian_Block* grid,
+                        MPI_Datatype x_slice, MPI_Datatype y_slice,
+                        MPI_Comm comm,
+                        MPI_Request* send_req, MPI_Request* recv_req)
 {
     const int tag = 0;
 
     // Send top row of my data to bottom halo of neighbor above me and
     // receive bottom row of same neighbor's data into my top halo
-    MPI_Isend( &u[0][grid->ny-2], 1, x_slice, grid->above_neighbor, tag, comm,
-               &send_req[0] );
-    MPI_Irecv( &u[0][0],          1, x_slice, grid->below_neighbor, tag, comm,
-               &recv_req[0] );
+    MPI_Isend(&u[0][grid->ny-2], 1, x_slice, grid->above_neighbor, tag, comm,
+              &send_req[0]);
+    MPI_Irecv(&u[0][0],          1, x_slice, grid->below_neighbor, tag, comm,
+              &recv_req[0]);
 
     // Send bottom row of my data to top halo of neighbor below me and
     // receive top row of same neighbor's data into my bottom halo
-    MPI_Isend( &u[0][1],          1, x_slice, grid->below_neighbor, tag, comm,
-               &send_req[1] );
-    MPI_Irecv( &u[0][grid->ny-1], 1, x_slice, grid->above_neighbor, tag, comm,
-               &recv_req[1] );
+    MPI_Isend(&u[0][1],          1, x_slice, grid->below_neighbor, tag, comm,
+              &send_req[1]);
+    MPI_Irecv(&u[0][grid->ny-1], 1, x_slice, grid->above_neighbor, tag, comm,
+              &recv_req[1]);
 
     // Send right column of my data to left halo of neighbor to my right
     // and receive left column of same neighbor's data into my right halo
-    MPI_Isend( &u[grid->nx-2][0], 1, y_slice, grid->right_neighbor, tag, comm,
-               &send_req[2] );
-    MPI_Irecv( &u[0][0],          1, y_slice, grid->left_neighbor,  tag, comm,
-               &recv_req[2] );
+    MPI_Isend(&u[grid->nx-2][0], 1, y_slice, grid->right_neighbor, tag, comm,
+              &send_req[2]);
+    MPI_Irecv(&u[0][0],          1, y_slice, grid->left_neighbor,  tag, comm,
+              &recv_req[2]);
 
     // Send left column of my data to right halo of neighbor to my left
     // and receive right column of same neighbor's data into my left halo
-    MPI_Isend( &u[1][0],          1, y_slice, grid->left_neighbor,  tag, comm,
-               &send_req[3] );
-    MPI_Irecv( &u[grid->nx-1][0], 1, y_slice, grid->right_neighbor, tag, comm,
-               &recv_req[3] );
+    MPI_Isend(&u[1][0],          1, y_slice, grid->left_neighbor,  tag, comm,
+              &send_req[3]);
+    MPI_Irecv(&u[grid->nx-1][0], 1, y_slice, grid->right_neighbor, tag, comm,
+              &recv_req[3]);
 }
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
     int NX = 10;                // number of grid points in x direction
     int NY = 10;                // number of grid points in y direction
     int num_proc;               // number of participating processes
     int rank;                   // process rank within communicator
-    int dims[2] = { 0, 0 };     // allow MPI to choose grid block dimensions
-    int periodic[2] = { 0, 0 }; // domain is non-periodic
+    int dims[2] = {0, 0};       // allow MPI to choose grid block dimensions
+    int periodic[2] = {0, 0};   // domain is non-periodic
     int may_rerank = 1;         // allow processes to be re-ranked
     Cartesian_Block halo_grid;  // parameters for grid block including halo
     Cartesian_Block orig_grid;  // parameters for grid block without halo
@@ -219,61 +219,61 @@ int main( int argc, char *argv[] )
 
     // Initialize MPI
 
-    MPI_Init( &argc, &argv );
-    MPI_Comm_size( MPI_COMM_WORLD, &num_proc );
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     // Process command line.  All arguments are optional but first and
     // second must occur as a pair, if at all, and third and fourth
     // must occur as a pair, if at all.
 
-    if ( argc == 2 || argc == 4 || argc > 5 )
+    if (argc == 2 || argc == 4 || argc > 5)
     {
-        if ( rank == 0 )
+        if (rank == 0)
         {
-            printf( "Usage: %s [NX NY [DIMX DIMY]]\n\n", argv[0] );
-            printf( "- NX and NY are the grid dimensions.\n" );
-            printf( "- DIMX and DIMY are the process grid dimensions.\n" );
+            printf("Usage: %s [NX NY [DIMX DIMY]]\n\n", argv[0]);
+            printf("- NX and NY are the grid dimensions.\n");
+            printf("- DIMX and DIMY are the process grid dimensions.\n");
         }
         MPI_Finalize();
-        exit( EXIT_FAILURE );
+        exit(EXIT_FAILURE);
     }
 
     // Override default grid dimensions if requested.  Make sure both
     // values are positive.
 
-    if ( argc >= 3 )
+    if (argc >= 3)
     {
-        NX = atoi( argv[1] );
-        NY = atoi( argv[2] );
+        NX = atoi(argv[1]);
+        NY = atoi(argv[2]);
     }
-    if ( NX <= 0 || NY <= 0 )
+    if (NX <= 0 || NY <= 0)
     {
-        if ( rank == 0 )
+        if (rank == 0)
         {
-            fprintf( stderr, "Error: both NX and NY must be positive.\n" );
+            fprintf(stderr, "Error: both NX and NY must be positive.\n");
         }
         MPI_Finalize();
-        exit( EXIT_FAILURE );
+        exit(EXIT_FAILURE);
     }
 
     // Override default process grid dimensions if requested.  Make
     // sure that if the user specified block grid dimensions they are
     // consistent with the number of processes.
 
-    if ( argc >= 5 )
+    if (argc >= 5)
     {
-        dims[0] = atoi( argv[3] );
-        dims[1] = atoi( argv[4] );
-        if ( dims[0] * dims[1] != num_proc )
+        dims[0] = atoi(argv[3]);
+        dims[1] = atoi(argv[4]);
+        if (dims[0] * dims[1] != num_proc)
         {
-            if ( rank == 0 )
+            if (rank == 0)
             {
-                fprintf( stderr, "Product of grid block dimensions must " );
-                fprintf( stderr, "match the number of processes\n" );
+                fprintf(stderr, "Product of grid block dimensions must ");
+                fprintf(stderr, "match the number of processes\n");
             }
             MPI_Finalize();
-            exit( EXIT_FAILURE );
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -281,9 +281,9 @@ int main( int argc, char *argv[] )
     // created and our rank may be adjusted relative to this new
     // communicator.
 
-    comm2d = mpi_cart_setup( num_proc, NX, NY, may_rerank, &rank, dims,
-                             periodic, &x_slice, &y_slice, &halo_grid,
-                             &orig_grid );
+    comm2d = mpi_cart_setup(num_proc, NX, NY, may_rerank, &rank, dims,
+                            periodic, &x_slice, &y_slice, &halo_grid,
+                            &orig_grid);
 
     // Create my portion of the grid.  For the exchange to work
     // properly we must have a constant stride in each dimension.
@@ -294,7 +294,7 @@ int main( int argc, char *argv[] )
 
     u = new double* [halo_grid.nx];
     u[0] = new double [halo_grid.nx * halo_grid.ny];
-    for ( int i = 1; i < halo_grid.nx; i++ ) u[i] = &u[0][i * halo_grid.ny];
+    for (int i = 1; i < halo_grid.nx; i++) u[i] = &u[0][i * halo_grid.ny];
 
     // Since this is a demonstration program, here we initialize the
     // local portion of the grid with values that indicate their
@@ -304,26 +304,26 @@ int main( int argc, char *argv[] )
     // coordinate in the grid (0 is at left), and YY is the y
     // coordinate in the grid (0 is at bottom)
 
-    for ( int j = 0; j < halo_grid.ny; j++ )
+    for (int j = 0; j < halo_grid.ny; j++)
     {
-        for ( int i = 0; i < halo_grid.nx; i++ )
+        for (int i = 0; i < halo_grid.nx; i++)
         {
-            u[i][j] = rank + 0.01 * ( i + halo_grid.x0 )
-                + 0.0001 * ( j + halo_grid.y0 );
+            u[i][j] = rank + 0.01 * (i + halo_grid.x0)
+                + 0.0001 * (j + halo_grid.y0);
         }
     }
 
     // Ready to start exchanging data.  Wait for my turn and then
     // display my portion of the grid.
 
-    if ( rank == 0 )
+    if (rank == 0)
     {
-        printf( "\n" );
-        printf( "********************************************************\n" );
-        printf( "**** Local grids BEFORE exchange ***********************\n" );
-        printf( "********************************************************\n" );
+        printf("\n");
+        printf("********************************************************\n");
+        printf("**** Local grids BEFORE exchange ***********************\n");
+        printf("********************************************************\n");
     }
-    dump_grid_rank_order( u, &halo_grid, num_proc, rank, comm2d );
+    dump_grid_rank_order(u, &halo_grid, num_proc, rank, comm2d);
 
     /*******************************************************************
      * Now we're done setting things up.  In a "real" program, now     *
@@ -332,11 +332,11 @@ int main( int argc, char *argv[] )
      * to adjacent processes.                                          *
      *******************************************************************/
 
-    exchange_halo_data( u, &halo_grid, x_slice, y_slice, comm2d,
-                        send_req, recv_req );
+    exchange_halo_data(u, &halo_grid, x_slice, y_slice, comm2d,
+                       send_req, recv_req);
 
     // Wait until it's okay to modify data that was sent to neighbor halos
-    MPI_Waitall( 4, send_req, MPI_STATUSES_IGNORE );
+    MPI_Waitall(4, send_req, MPI_STATUSES_IGNORE);
 
     /*******************************************************************
      * Here we would do work that can be done prior to the exchange of *
@@ -345,7 +345,7 @@ int main( int argc, char *argv[] )
      *******************************************************************/
 
     // Wait for all necessary halo boundary data to arrive
-    MPI_Waitall( 4, recv_req, MPI_STATUSES_IGNORE );
+    MPI_Waitall(4, recv_req, MPI_STATUSES_IGNORE);
 
     /*******************************************************************
      * Here we can do any remaining work that can be done once the     *
@@ -355,21 +355,21 @@ int main( int argc, char *argv[] )
     // Exchange cycle is complete.  Wait for my turn and then display
     // my portion of the grid.
 
-    if ( rank == 0 )
+    if (rank == 0)
     {
-        printf( "\n" );
-        printf( "********************************************************\n" );
-        printf( "**** Local grids AFTER exchange ************************\n" );
-        printf( "********************************************************\n" );
+        printf("\n");
+        printf("********************************************************\n");
+        printf("**** Local grids AFTER exchange ************************\n");
+        printf("********************************************************\n");
     }
-    dump_grid_rank_order( u, &halo_grid, num_proc, rank, comm2d );
+    dump_grid_rank_order(u, &halo_grid, num_proc, rank, comm2d);
 
     // Release memory and datatypes and then quit
 
     delete [] u[0];
     delete [] u;
-    MPI_Type_free( &x_slice );
-    MPI_Type_free( &y_slice );
+    MPI_Type_free(&x_slice);
+    MPI_Type_free(&y_slice);
 
     MPI_Finalize();
     return 0;

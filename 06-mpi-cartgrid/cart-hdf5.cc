@@ -105,16 +105,16 @@
  * Output:
  *   None, other than output to stdout.
  */
-void show_grid( double** v, int nx, int ny )
+void show_grid(double** v, int nx, int ny)
 {
-    printf( "--------------------------------------------------------\n" );
-    for ( int j = ny - 1; j >= 0; j-- )
+    printf("--------------------------------------------------------\n");
+    for (int j = ny - 1; j >= 0; j--)
     {
-        for ( int i = 0; i < nx; i++ ) printf( " %6.4f", v[i][j] );
-        printf( "\n" );
+        for (int i = 0; i < nx; i++) printf(" %6.4f", v[i][j]);
+        printf("\n");
     }
-    printf( "--------------------------------------------------------\n" );
-    fflush( stdout );
+    printf("--------------------------------------------------------\n");
+    fflush(stdout);
 }
 
 /*----------------------------------------------------------------------------
@@ -130,19 +130,19 @@ void show_grid( double** v, int nx, int ny )
  * Output:
  *   None, other than output to stdout.
  */
-void dump_grid_rank_order( double** u, Cartesian_Block* halo_grid,
-                           int num_proc, int rank, MPI_Comm comm )
+void dump_grid_rank_order(double** u, Cartesian_Block* halo_grid,
+                          int num_proc, int rank, MPI_Comm comm)
 {
-    for ( int i = 0; i < num_proc; i++ )
+    for (int i = 0; i < num_proc; i++)
     {
-        if ( rank == i )
+        if (rank == i)
         {
-            printf( "Rank: %d\n", rank );
-            show_grid( u, halo_grid->nx, halo_grid->ny );
+            printf("Rank: %d\n", rank);
+            show_grid(u, halo_grid->nx, halo_grid->ny);
         }
         // Use barrier and delay so output comes out in process rank order
-        MPI_Barrier( comm );
-        usleep( 10000 ); // 0.01 sec
+        MPI_Barrier(comm);
+        usleep(10000); // 0.01 sec
     }
     
 }
@@ -160,35 +160,35 @@ void dump_grid_rank_order( double** u, Cartesian_Block* halo_grid,
  * Output:
  *   double** u            - 2-D array holding grid block with update halo
  */
-void exchange_halo_data( double** u, Cartesian_Block* grid,
-                         MPI_Datatype x_slice, MPI_Datatype y_slice,
-                         MPI_Comm comm )
+void exchange_halo_data(double** u, Cartesian_Block* grid,
+                        MPI_Datatype x_slice, MPI_Datatype y_slice,
+                        MPI_Comm comm)
 {
     const int tag = 0;
 
     // Send top row of my data to bottom halo of neighbor above me and
     // receive bottom row of same neighbor's data into my top halo
-    MPI_Sendrecv( &u[0][grid->ny-2], 1, x_slice, grid->above_neighbor, tag,
-		  &u[0][0],          1, x_slice, grid->below_neighbor, tag,
-		  comm, MPI_STATUS_IGNORE );
+    MPI_Sendrecv(&u[0][grid->ny-2], 1, x_slice, grid->above_neighbor, tag,
+                 &u[0][0],          1, x_slice, grid->below_neighbor, tag,
+                 comm, MPI_STATUS_IGNORE);
 
     // Send bottom row of my data to top halo of neighbor below me and
     // receive top row of same neighbor's data into my bottom halo
-    MPI_Sendrecv( &u[0][1],          1, x_slice, grid->below_neighbor, tag,
-		  &u[0][grid->ny-1], 1, x_slice, grid->above_neighbor, tag,
-		  comm, MPI_STATUS_IGNORE );
+    MPI_Sendrecv(&u[0][1],          1, x_slice, grid->below_neighbor, tag,
+                 &u[0][grid->ny-1], 1, x_slice, grid->above_neighbor, tag,
+                 comm, MPI_STATUS_IGNORE);
 
     // Send right column of my data to left halo of neighbor to my right
     // and receive left column of same neighbor's data into my right halo
-    MPI_Sendrecv( &u[grid->nx-2][0], 1, y_slice, grid->right_neighbor, tag,
-		  &u[0][0],          1, y_slice, grid->left_neighbor,  tag,
-		  comm, MPI_STATUS_IGNORE );
+    MPI_Sendrecv(&u[grid->nx-2][0], 1, y_slice, grid->right_neighbor, tag,
+                 &u[0][0],          1, y_slice, grid->left_neighbor,  tag,
+                 comm, MPI_STATUS_IGNORE);
 
     // Send left column of my data to right halo of neighbor to my left
     // and receive right column of same neighbor's data into my left halo
-    MPI_Sendrecv( &u[1][0],          1, y_slice, grid->left_neighbor,  tag,
-		  &u[grid->nx-1][0], 1, y_slice, grid->right_neighbor, tag,
-		  comm, MPI_STATUS_IGNORE );
+    MPI_Sendrecv(&u[1][0],          1, y_slice, grid->left_neighbor,  tag,
+		 &u[grid->nx-1][0], 1, y_slice, grid->right_neighbor, tag,
+		 comm, MPI_STATUS_IGNORE);
 }
 
 /*----------------------------------------------------------------------------
@@ -206,9 +206,9 @@ void exchange_halo_data( double** u, Cartesian_Block* grid,
  * Output:
  *   None, other than created file
  */
-void writeFile( const char* fname, const char* dname, double** u,
-                int NX, int NY, Cartesian_Block* orig_grid,
-                Cartesian_Block* halo_grid, MPI_Comm comm )
+void writeFile(const char* fname, const char* dname, double** u,
+               int NX, int NY, Cartesian_Block* orig_grid,
+               Cartesian_Block* halo_grid, MPI_Comm comm)
 {
     hid_t plist_id;       // property list
     hid_t file_id;        // output file
@@ -221,27 +221,27 @@ void writeFile( const char* fname, const char* dname, double** u,
     hsize_t offset[2];    // start values of data block locations
 
     // Create property list for output file using data from MPI communicator
-    plist_id = H5Pcreate( H5P_FILE_ACCESS );
-    H5Pset_fapl_mpio( plist_id, comm, MPI_INFO_NULL );
+    plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(plist_id, comm, MPI_INFO_NULL);
 
     // Create the output file - property list not needed after this
-    file_id = H5Fcreate( fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id );
-    H5Pclose( plist_id );
+    file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    H5Pclose(plist_id);
 
     // Create output file dataspace and dataset that will hold data from all
     // processes.  Use dimensions for entire grid.
     dimsf[0] = NX;
     dimsf[1] = NY;
-    dataspace_id = H5Screate_simple( 2, dimsf, NULL );
-    dataset_id = H5Dcreate( file_id, dname, H5T_IEEE_F64LE, dataspace_id,
-                            H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+    dataspace_id = H5Screate_simple(2, dimsf, NULL);
+    dataset_id = H5Dcreate(file_id, dname, H5T_IEEE_F64LE, dataspace_id,
+                           H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     // Create local dataspace corresponding to process's portion of the
     // global dataspace.  Use the actual dimensions for the portion of
     // the data this process is responsible for, including halo.
     dimsm[0] = halo_grid->nx;
     dimsm[1] = halo_grid->ny;
-    memspace_id = H5Screate_simple( 2, dimsm, NULL );
+    memspace_id = H5Screate_simple(2, dimsm, NULL);
 
     // Define the hyperslab in the global dataspace corresponding to the
     // data to be written by this process.
@@ -249,44 +249,44 @@ void writeFile( const char* fname, const char* dname, double** u,
     offset[1] = orig_grid->y0;
     count[0]  = orig_grid->nx;
     count[1]  = orig_grid->ny;
-    H5Sselect_hyperslab( dataspace_id, H5S_SELECT_SET, offset, NULL, count,
-                         NULL );
+    H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count,
+                        NULL);
 
     // Define the hyperslab in the local dataspace corresponding to the
     // data to be written by this process.  Offsets are nonzero
     // if there is a ghost/halo boundary to ignore on the left or bottom.
     offset[0] = orig_grid->x0 - halo_grid->x0;
     offset[1] = orig_grid->y0 - halo_grid->y0;
-    H5Sselect_hyperslab( memspace_id, H5S_SELECT_SET, offset, NULL, count,
-                         NULL );
+    H5Sselect_hyperslab(memspace_id, H5S_SELECT_SET, offset, NULL, count,
+                        NULL);
 
     // Set transfer mode to be collective (rather than independent)
-    plist_id = H5Pcreate( H5P_DATASET_XFER );
-    H5Pset_dxpl_mpio( plist_id, H5FD_MPIO_COLLECTIVE );
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
     // Finally - we can write the data!
-    H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE, memspace_id, dataspace_id,
-              plist_id, &u[0][0] );
+    H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, memspace_id, dataspace_id,
+             plist_id, &u[0][0]);
 
     // All done -- release all remaining open dataspaces, datasets, etc.
-    H5Pclose( plist_id );
-    H5Sclose( memspace_id );
-    H5Dclose( dataset_id );
-    H5Sclose( dataspace_id );
-    H5Fclose( file_id );
+    H5Pclose(plist_id);
+    H5Sclose(memspace_id);
+    H5Dclose(dataset_id);
+    H5Sclose(dataspace_id);
+    H5Fclose(file_id);
 }
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
     int NX = 10;                // number of grid points in x direction
     int NY = 10;                // number of grid points in y direction
     int num_proc;               // number of participating processes
     int rank;                   // process rank within communicator
-    int dims[2] = { 0, 0 };     // allow MPI to choose grid block dimensions
-    int periodic[2] = { 0, 0 }; // domain is non-periodic
+    int dims[2] = {0, 0};       // allow MPI to choose grid block dimensions
+    int periodic[2] = {0, 0};   // domain is non-periodic
     int may_rerank = 1;         // allow processes to be re-ranked
     Cartesian_Block halo_grid;  // parameters for grid block including halo
     Cartesian_Block orig_grid;  // parameters for grid block without halo
@@ -297,61 +297,61 @@ int main( int argc, char *argv[] )
 
     // Initialize MPI
 
-    MPI_Init( &argc, &argv );
-    MPI_Comm_size( MPI_COMM_WORLD, &num_proc );
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     // Process command line.  All arguments are optional but first and
     // second must occur as a pair, if at all, and third and fourth
     // must occur as a pair, if at all.
 
-    if ( argc == 2 || argc == 4 || argc > 5 )
+    if (argc == 2 || argc == 4 || argc > 5)
     {
-        if ( rank == 0 )
+        if (rank == 0)
         {
-            printf( "Usage: %s [NX NY [DIMX DIMY]]\n\n", argv[0] );
-            printf( "- NX and NY are the grid dimensions.\n" );
-            printf( "- DIMX and DIMY are the process grid dimensions.\n" );
+            printf("Usage: %s [NX NY [DIMX DIMY]]\n\n", argv[0]);
+            printf("- NX and NY are the grid dimensions.\n");
+            printf("- DIMX and DIMY are the process grid dimensions.\n");
         }
         MPI_Finalize();
-        exit( EXIT_FAILURE );
+        exit(EXIT_FAILURE);
     }
 
     // Override default grid dimensions if requested.  Make sure both
     // values are positive.
 
-    if ( argc >= 3 )
+    if (argc >= 3)
     {
-        NX = atoi( argv[1] );
-        NY = atoi( argv[2] );
+        NX = atoi(argv[1]);
+        NY = atoi(argv[2]);
     }
-    if ( NX <= 0 || NY <= 0 )
+    if (NX <= 0 || NY <= 0)
     {
-        if ( rank == 0 )
+        if (rank == 0)
         {
-            fprintf( stderr, "Error: both NX and NY must be positive.\n" );
+            fprintf(stderr, "Error: both NX and NY must be positive.\n");
         }
         MPI_Finalize();
-        exit( EXIT_FAILURE );
+        exit(EXIT_FAILURE);
     }
 
     // Override default process grid dimensions if requested.  Make
     // sure that if the user specified block grid dimensions they are
     // consistent with the number of processes.
 
-    if ( argc >= 5 )
+    if (argc >= 5)
     {
-        dims[0] = atoi( argv[3] );
-        dims[1] = atoi( argv[4] );
-        if ( dims[0] * dims[1] != num_proc )
+        dims[0] = atoi(argv[3]);
+        dims[1] = atoi(argv[4]);
+        if (dims[0] * dims[1] != num_proc)
         {
-            if ( rank == 0 )
+            if (rank == 0)
             {
-                fprintf( stderr, "Product of grid block dimensions must " );
-                fprintf( stderr, "match the number of processes\n" );
+                fprintf(stderr, "Product of grid block dimensions must ");
+                fprintf(stderr, "match the number of processes\n");
             }
             MPI_Finalize();
-            exit( EXIT_FAILURE );
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -359,9 +359,9 @@ int main( int argc, char *argv[] )
     // created and our rank may be adjusted relative to this new
     // communicator.
 
-    comm2d = mpi_cart_setup( num_proc, NX, NY, may_rerank, &rank, dims,
-                             periodic, &x_slice, &y_slice, &halo_grid,
-                             &orig_grid );
+    comm2d = mpi_cart_setup(num_proc, NX, NY, may_rerank, &rank, dims,
+                            periodic, &x_slice, &y_slice, &halo_grid,
+                            &orig_grid);
 
     // Create my portion of the grid.  For the exchange to work
     // properly we must have a constant stride in each dimension.
@@ -372,7 +372,7 @@ int main( int argc, char *argv[] )
 
     u = new double* [halo_grid.nx];
     u[0] = new double [halo_grid.nx * halo_grid.ny];
-    for ( int i = 1; i < halo_grid.nx; i++ ) u[i] = &u[0][i * halo_grid.ny];
+    for (int i = 1; i < halo_grid.nx; i++) u[i] = &u[0][i * halo_grid.ny];
 
     // Since this is a demonstration program, here we initialize the
     // local portion of the grid with values that indicate their
@@ -382,26 +382,26 @@ int main( int argc, char *argv[] )
     // coordinate in the grid (0 is at left), and YY is the y
     // coordinate in the grid (0 is at bottom)
 
-    for ( int j = 0; j < halo_grid.ny; j++ )
+    for (int j = 0; j < halo_grid.ny; j++)
     {
-        for ( int i = 0; i < halo_grid.nx; i++ )
+        for (int i = 0; i < halo_grid.nx; i++)
         {
-            u[i][j] = rank + 0.01 * ( i + halo_grid.x0 )
-                + 0.0001 * ( j + halo_grid.y0 );
+            u[i][j] = rank + 0.01 * (i + halo_grid.x0)
+                + 0.0001 * (j + halo_grid.y0);
         }
     }
 
     // Ready to start exchanging data.  Wait for my turn and then
     // display my portion of the grid.
 
-    if ( rank == 0 )
+    if (rank == 0)
     {
-        printf( "\n" );
-        printf( "********************************************************\n" );
-        printf( "**** Local grids BEFORE exchange ***********************\n" );
-        printf( "********************************************************\n" );
+        printf("\n");
+        printf("********************************************************\n");
+        printf("**** Local grids BEFORE exchange ***********************\n");
+        printf("********************************************************\n");
     }
-    dump_grid_rank_order( u, &halo_grid, num_proc, rank, comm2d );
+    dump_grid_rank_order(u, &halo_grid, num_proc, rank, comm2d);
 
     /*******************************************************************
      * Now we're done setting things up.  In a "real" program, now     *
@@ -410,7 +410,7 @@ int main( int argc, char *argv[] )
      * to adjacent processes.                                          *
      *******************************************************************/
 
-    exchange_halo_data( u, &halo_grid, x_slice, y_slice, comm2d );
+    exchange_halo_data(u, &halo_grid, x_slice, y_slice, comm2d);
 
     /*******************************************************************
      * Here we can do work that can be done once the exchange is done. *
@@ -419,26 +419,26 @@ int main( int argc, char *argv[] )
     // Exchange cycle is complete.  Wait for my turn and then display
     // my portion of the grid.
 
-    if ( rank == 0 )
+    if (rank == 0)
     {
-        printf( "\n" );
-        printf( "********************************************************\n" );
-        printf( "**** Local grids AFTER exchange ************************\n" );
-        printf( "********************************************************\n" );
+        printf("\n");
+        printf("********************************************************\n");
+        printf("**** Local grids AFTER exchange ************************\n");
+        printf("********************************************************\n");
     }
-    dump_grid_rank_order( u, &halo_grid, num_proc, rank, comm2d );
+    dump_grid_rank_order(u, &halo_grid, num_proc, rank, comm2d);
 
     // Write grid data to HDF5 file
 
-    writeFile( "cart-hdf5.dat", "/grid", u, NX, NY, &orig_grid, &halo_grid,
-               comm2d );
+    writeFile("cart-hdf5.dat", "/grid", u, NX, NY, &orig_grid, &halo_grid,
+              comm2d);
 
     // Release memory and datatypes and then quit
 
     delete [] u[0];
     delete [] u;
-    MPI_Type_free( &x_slice );
-    MPI_Type_free( &y_slice );
+    MPI_Type_free(&x_slice);
+    MPI_Type_free(&y_slice);
 
     MPI_Finalize();
     return 0;

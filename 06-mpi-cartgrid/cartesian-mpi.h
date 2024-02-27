@@ -20,11 +20,11 @@ typedef struct Cartesian_Block
 
 // Function prototypes
 
-void decompose1d( int n, int m, int i, int* s, int* e );
+void decompose1d(int n, int m, int i, int* s, int* e);
 
-MPI_Comm mpi_cart_setup( int num_proc, int NX, int NY, int may_rerank,
-                         int* rank, int* dims, int* periodic,
-                         MPI_Datatype* x_slice, MPI_Datatype* y_slice,
-                         Cartesian_Block* halo_grid,
-                         Cartesian_Block* orig_grid );
+MPI_Comm mpi_cart_setup(int num_proc, int NX, int NY, int may_rerank,
+                        int* rank, int* dims, int* periodic,
+                        MPI_Datatype* x_slice, MPI_Datatype* y_slice,
+                        Cartesian_Block* halo_grid,
+                        Cartesian_Block* orig_grid);
 #endif

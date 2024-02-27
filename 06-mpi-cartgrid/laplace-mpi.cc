@@ -49,17 +49,17 @@ void show_grid(
     const int nx = grid->nx;
     const int ny = grid->ny;
 
-    printf( "--------------------------------------------------------\n" );
-    for ( int j = ny - 1; j >= 0; j-- )
+    printf("--------------------------------------------------------\n");
+    for (int j = ny - 1; j >= 0; j--)
     {
-        for ( int i = 0; i < nx; i++ )
+        for (int i = 0; i < nx; i++)
         {
-            printf( " %6.2f", v[IDX(i,j)] );
+            printf(" %6.2f", v[IDX(i,j)]);
         }
-        printf( "\n" );
+        printf("\n");
     }
-    printf( "--------------------------------------------------------\n" );
-    fflush( stdout );
+    printf("--------------------------------------------------------\n");
+    fflush(stdout);
 }
 
 //---------------------------------------------------------------------------
@@ -73,16 +73,16 @@ void dump_grid(
     MPI_Comm comm2d           // Cartesian communicator
     )
 {
-    for ( int i = 0; i < num_proc; i++ )
+    for (int i = 0; i < num_proc; i++)
     {
-        if ( my_rank == i )
+        if (my_rank == i)
         {
-            printf( "Rank: %d\n", my_rank );
-            show_grid( grid, u );
+            printf("Rank: %d\n", my_rank);
+            show_grid(grid, u);
         }
         // barrier and delay so output comes out in process rank order
-        MPI_Barrier( comm2d );
-        usleep( 10000 );
+        MPI_Barrier(comm2d);
+        usleep(10000);
     }
 }
 
@@ -94,7 +94,7 @@ void init_grid(
     double* u                 // local grid data
     )
 {
-    for ( int i = 0; i < grid->nx * grid->ny; i++ ) u[i] = 0.0;
+    for (int i = 0; i < grid->nx * grid->ny; i++) u[i] = 0.0;
 }
 
 //---------------------------------------------------------------------------
@@ -112,19 +112,19 @@ void impose_boundary_conditions(
     const int ny = grid->ny;
 
     // set top and bottom boundary values
-    for ( int i = 0; i < nx; i++ )
+    for (int i = 0; i < nx; i++)
     {
-        double x = x0 + ( xn - x0 ) * ( grid->x0 + i ) / ( NX - 1 );
-        if ( grid->below_neighbor < 0 ) u[IDX(i,0)]    = 0.0;
-        if ( grid->above_neighbor < 0 ) u[IDX(i,ny-1)] = 1.0 + x * ( 1.0 - x );
+        double x = x0 + (xn - x0) * (grid->x0 + i) / (NX - 1);
+        if (grid->below_neighbor < 0) u[IDX(i,0)]    = 0.0;
+        if (grid->above_neighbor < 0) u[IDX(i,ny-1)] = 1.0 + x * (1.0 - x);
     }
 
     // set left and right boundary values
-    for ( int j = 0; j < ny; j++ )
+    for (int j = 0; j < ny; j++)
     {
-        double y = y0 + ( yn - y0 ) * ( grid->y0 + j ) / ( NY - 1 );
-        if ( grid->left_neighbor  < 0 ) u[IDX(0,j)]    = y;
-        if ( grid->right_neighbor < 0 ) u[IDX(nx-1,j)] = y * y;
+        double y = y0 + (yn - y0) * (grid->y0 + j) / (NY - 1);
+        if (grid->left_neighbor  < 0) u[IDX(0,j)]    = y;
+        if (grid->right_neighbor < 0) u[IDX(nx-1,j)] = y * y;
     }
 }
 
@@ -138,12 +138,12 @@ void jacobi_sweep(
     int ny      // number of y grid points
     )
 {
-    for ( int i = 1; i < nx-1; i++ )
+    for (int i = 1; i < nx-1; i++)
     {
-        for ( int j = 1; j < ny-1; j++ )
+        for (int j = 1; j < ny-1; j++)
         {
-            v[IDX(i,j)] = ( u[IDX(i-1,j)] + u[IDX(i+1,j)]
-                            + u[IDX(i,j-1)] + u[IDX(i,j+1)] ) / 4.0;
+            v[IDX(i,j)] = (u[IDX(i-1,j)] + u[IDX(i+1,j)]
+                           + u[IDX(i,j-1)] + u[IDX(i,j+1)]) / 4.0;
         }
     }
 }
@@ -158,7 +158,7 @@ void update(
     int ny      // number of y grid points
     )
 {
-    for ( int i = 0; i < nx * ny; i++ ) v[i] = u[i];
+    for (int i = 0; i < nx * ny; i++) v[i] = u[i];
 }
 
 //---------------------------------------------------------------------------
@@ -172,11 +172,11 @@ double norm(
     )
 {
     double s = 0.0;
-    for ( int i = 1; i < nx-1; i++ )
+    for (int i = 1; i < nx-1; i++)
     {
-        for ( int j = 1; j < ny-1; j++ )
+        for (int j = 1; j < ny-1; j++)
         {
-            s += fabs( v[IDX(i,j)] - u[IDX(i,j)] );
+            s += fabs(v[IDX(i,j)] - u[IDX(i,j)]);
         }
     }
     return s;
@@ -209,27 +209,27 @@ void exchange_halo_data(
     
     // Send top row of my data to bottom halo of neighbor above me and
     // receive bottom row of same neighbor's data into my top halo
-    MPI_Sendrecv( &u[IDX(0,ny-2)], 1, x_slice, grid->above_neighbor, tag,
-		  &u[IDX(0,0)],    1, x_slice, grid->below_neighbor, tag,
-		  comm, MPI_STATUS_IGNORE );
+    MPI_Sendrecv(&u[IDX(0,ny-2)], 1, x_slice, grid->above_neighbor, tag,
+                 &u[IDX(0,0)],    1, x_slice, grid->below_neighbor, tag,
+                 comm, MPI_STATUS_IGNORE);
     
     // Send bottom row of my data to top halo of neighbor below me and
     // receive top row of same neighbor's data into my bottom halo
-    MPI_Sendrecv( &u[IDX(0,1)],    1, x_slice, grid->below_neighbor, tag,
-		  &u[IDX(0,ny-1)], 1, x_slice, grid->above_neighbor, tag,
-		  comm, MPI_STATUS_IGNORE );
+    MPI_Sendrecv(&u[IDX(0,1)],    1, x_slice, grid->below_neighbor, tag,
+                 &u[IDX(0,ny-1)], 1, x_slice, grid->above_neighbor, tag,
+                 comm, MPI_STATUS_IGNORE);
 
     // Send right column of my data to left halo of neighbor to my right
     // and receive left column of same neighbor's data into my right halo
-    MPI_Sendrecv( &u[IDX(nx-2,0)], 1, y_slice, grid->right_neighbor, tag,
-		  &u[IDX(0,0)],    1, y_slice, grid->left_neighbor,  tag,
-		  comm, MPI_STATUS_IGNORE );
+    MPI_Sendrecv(&u[IDX(nx-2,0)], 1, y_slice, grid->right_neighbor, tag,
+                 &u[IDX(0,0)],    1, y_slice, grid->left_neighbor,  tag,
+                 comm, MPI_STATUS_IGNORE);
 
     // Send left column of my data to right halo of neighbor to my left
     // and receive right column of same neighbor's data into my left halo
-    MPI_Sendrecv( &u[IDX(1,0)],    1, y_slice, grid->left_neighbor,  tag,
-		  &u[IDX(nx-1,0)], 1, y_slice, grid->right_neighbor, tag,
-		  comm, MPI_STATUS_IGNORE );
+    MPI_Sendrecv(&u[IDX(1,0)],    1, y_slice, grid->left_neighbor,  tag,
+                 &u[IDX(nx-1,0)], 1, y_slice, grid->right_neighbor, tag,
+                 comm, MPI_STATUS_IGNORE);
 }
 
 //----------------------------------------------------------------------------
@@ -239,14 +239,14 @@ void usage(
     char* program   //program name string
     )
 {
-    printf( "Usage: %s ", program );
-    printf( "[-n N] [-e TOL] [-m MAXITER] [-s ITERATION_STRIDE] [-v]\n" );
+    printf("Usage: %s ", program);
+    printf("[-n N] [-e TOL] [-m MAXITER] [-s ITERATION_STRIDE] [-v]\n");
 }
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
     int nx = DEFAULT_DIMENSION;
     int ny = DEFAULT_DIMENSION;
@@ -267,32 +267,32 @@ int main( int argc, char* argv[] )
     MPI_Comm comm2d;           // Cartesian communicator
 
     // Initialize MPI
-    MPI_Init( &argc, &argv );
-    MPI_Comm_size( MPI_COMM_WORLD, &num_proc );
-    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     
     // Process command line
     int c;
     opterr = 0;  // suppress getopt error messages
-    while ( ( c = getopt( argc, argv, "e:hm:n:s:v" ) ) != -1 )
+    while ((c = getopt(argc, argv, "e:hm:n:s:v")) != -1)
     {
-        switch ( c )
+        switch (c)
         {
             case 'e':
-                tolerance = atof( optarg );
-                if ( tolerance <= 0.0 ) tolerance = DEFAULT_TOLERANCE;
+                tolerance = atof(optarg);
+                if (tolerance <= 0.0) tolerance = DEFAULT_TOLERANCE;
                 break;
             case 'n':
-                nx = ny = atoi( optarg );
-                if ( nx <= 0 ) nx = ny = DEFAULT_DIMENSION;
+                nx = ny = atoi(optarg);
+                if (nx <= 0) nx = ny = DEFAULT_DIMENSION;
                 break;
             case 'm':
-                max_iter = atoi( optarg );
-                if ( max_iter <= 0 ) max_iter = DEFAULT_ITERATIONS;
+                max_iter = atoi(optarg);
+                if (max_iter <= 0) max_iter = DEFAULT_ITERATIONS;
                 break;
             case 's':
-                iterations_between_checks = atoi( optarg );
-                if ( iterations_between_checks <= 0 )
+                iterations_between_checks = atoi(optarg);
+                if (iterations_between_checks <= 0)
                     iterations_between_checks = DEFAULT_ITERATION_STRIDE;
                 break;
             case 'v':
@@ -300,53 +300,53 @@ int main( int argc, char* argv[] )
                 break;
             case 'h':
             default:
-                if ( my_rank == 0 ) usage( argv[0] );
+                if (my_rank == 0) usage(argv[0]);
                 MPI_Finalize();
                 return 0;
         }
     }
 
     // Set up Cartesian communicator
-    comm2d = mpi_cart_setup( num_proc, nx, ny, may_rerank, &my_rank, dims,
-                             periodic, &x_slice, &y_slice, &halo_grid,
-                             &orig_grid );
-    
+    comm2d = mpi_cart_setup(num_proc, nx, ny, may_rerank, &my_rank, dims,
+                            periodic, &x_slice, &y_slice, &halo_grid,
+                            &orig_grid);
+
     // Allocate memory for grid and copy of grid
     double* u = new double [halo_grid.nx * halo_grid.ny];
     double* v = new double [halo_grid.nx * halo_grid.ny];
 
     // Prepare grid
-    init_grid( &halo_grid, u );
-    impose_boundary_conditions( 0.0, 1.0, 0.0, 1.0, nx, ny, &halo_grid, u );
-    update( v, u, halo_grid.nx, halo_grid.ny );
+    init_grid(&halo_grid, u);
+    impose_boundary_conditions(0.0, 1.0, 0.0, 1.0, nx, ny, &halo_grid, u);
+    update(v, u, halo_grid.nx, halo_grid.ny);
 
-    if ( verbosity > 1 ) dump_grid( my_rank, num_proc, &halo_grid, u, comm2d );
+    if (verbosity > 1) dump_grid(my_rank, num_proc, &halo_grid, u, comm2d);
 
     // Do Jacobi iterations until convergence or too many iterations
     double t0 = MPI_Wtime();
     int k = 0;
     double alpha = 2 * tolerance;
-    while ( k++ < max_iter && alpha > tolerance )
+    while (k++ < max_iter && alpha > tolerance)
     {
-        exchange_halo_data( u, &halo_grid, x_slice, y_slice, comm2d );
-        jacobi_sweep( v, u, halo_grid.nx, halo_grid.ny );
-        if ( k % iterations_between_checks == 0 )
+        exchange_halo_data(u, &halo_grid, x_slice, y_slice, comm2d);
+        jacobi_sweep(v, u, halo_grid.nx, halo_grid.ny);
+        if (k % iterations_between_checks == 0)
         {
-            double my_alpha = norm( u, v, halo_grid.nx, halo_grid.ny );
-            MPI_Allreduce( &my_alpha, &alpha, 1, MPI_DOUBLE, MPI_SUM, comm2d );
-            if ( verbosity > 0 && my_rank == 0 ) printf( "%6d %e\n", k, alpha );
-            if ( verbosity > 1 )
-                dump_grid( my_rank, num_proc, &halo_grid, u, comm2d );
+            double my_alpha = norm(u, v, halo_grid.nx, halo_grid.ny);
+            MPI_Allreduce(&my_alpha, &alpha, 1, MPI_DOUBLE, MPI_SUM, comm2d);
+            if (verbosity > 0 && my_rank == 0) printf("%6d %e\n", k, alpha);
+            if (verbosity > 1)
+                dump_grid(my_rank, num_proc, &halo_grid, u, comm2d);
         }
-        update( u, v, halo_grid.nx, halo_grid.ny );
+        update(u, v, halo_grid.nx, halo_grid.ny);
     }
     double t1 = MPI_Wtime();
 
     // Report results
-    if ( my_rank == 0 )
+    if (my_rank == 0)
     {
-        printf( "Iterations: %d Difference Norm: %12.6e  ", --k, alpha );
-        printf( "Time: %f seconds\n", t1 - t0 );
+        printf("Iterations: %d Difference Norm: %12.6e  ", --k, alpha);
+        printf("Time: %f seconds\n", t1 - t0);
     }
 
     // All done - clean up and exit
