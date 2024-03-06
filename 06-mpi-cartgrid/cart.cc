@@ -92,22 +92,24 @@
 
 #include "cartesian-mpi.cc"
 
+#define IDX(i,j,stride) ((i)*(stride)+(j)) // row major (C/C++)
+
 /*----------------------------------------------------------------------------
  * Print out 2D grid data
  *
  * Input:
- *   double** v      - two-dimensional array holding grid data
+ *   double* v       - two-dimensional array holding grid data
  *   int nx, ny      - dimensions of grid
  *
  * Output:
  *   None, other than output to stdout.
  */
-void show_grid(double** v, int nx, int ny)
+void show_grid(double* v, int nx, int ny)
 {
     printf("--------------------------------------------------------\n");
     for (int j = ny - 1; j >= 0; j--)
     {
-        for (int i = 0; i < nx; i++) printf(" %6.4f", v[i][j]);
+        for (int i = 0; i < nx; i++) printf(" %6.4f", v[IDX(i,j,ny)]);
         printf("\n");
     }
     printf("--------------------------------------------------------\n");
@@ -118,7 +120,7 @@ void show_grid(double** v, int nx, int ny)
  * Print out 2D grid data in rank-order
  *
  * Input:
- *   double** u                  - two-dimensional array holding grid data
+ *   double* u                   - two-dimensional array holding grid data
  *   Cartesian_Block* halo_grid  - grid parameters
  *   int num_proc                - number of processes
  *   int rank                    - process rank
@@ -127,7 +129,7 @@ void show_grid(double** v, int nx, int ny)
  * Output:
  *   None, other than output to stdout.
  */
-void dump_grid_rank_order(double** u, Cartesian_Block* halo_grid,
+void dump_grid_rank_order(double* u, Cartesian_Block* halo_grid,
                           int num_proc, int rank, MPI_Comm comm)
 {
     for (int i = 0; i < num_proc; i++)
@@ -155,36 +157,39 @@ void dump_grid_rank_order(double** u, Cartesian_Block* halo_grid,
  *   MPI_Comm comm         - communicator
  *
  * Output:
- *   double** u            - 2-D array holding grid block with update halo
+ *   double* u             - 2-D array holding grid block with update halo
  */
-void exchange_halo_data(double** u, Cartesian_Block* grid,
+void exchange_halo_data(double* u, Cartesian_Block* grid,
                         MPI_Datatype x_slice, MPI_Datatype y_slice,
                         MPI_Comm comm)
 {
     const int tag = 0;
+    const int nx = grid->nx;
+    const int ny = grid->ny;
+    const int m = grid->ny;
 
     // Send top row of my data to bottom halo of neighbor above me and
     // receive bottom row of same neighbor's data into my top halo
-    MPI_Sendrecv(&u[0][grid->ny-2], 1, x_slice, grid->above_neighbor, tag,
-                 &u[0][0],          1, x_slice, grid->below_neighbor, tag,
+    MPI_Sendrecv(&u[IDX(0,ny-2,m)], 1, x_slice, grid->above_neighbor, tag,
+                 &u[IDX(0,0,m)],    1, x_slice, grid->below_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 
     // Send bottom row of my data to top halo of neighbor below me and
     // receive top row of same neighbor's data into my bottom halo
-    MPI_Sendrecv(&u[0][1],          1, x_slice, grid->below_neighbor, tag,
-                 &u[0][grid->ny-1], 1, x_slice, grid->above_neighbor, tag,
+    MPI_Sendrecv(&u[IDX(0,1,m)],    1, x_slice, grid->below_neighbor, tag,
+                 &u[IDX(0,ny-1,m)], 1, x_slice, grid->above_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 
     // Send right column of my data to left halo of neighbor to my right
     // and receive left column of same neighbor's data into my right halo
-    MPI_Sendrecv(&u[grid->nx-2][0], 1, y_slice, grid->right_neighbor, tag,
-                 &u[0][0],          1, y_slice, grid->left_neighbor,  tag,
+    MPI_Sendrecv(&u[IDX(nx-2,0,m)], 1, y_slice, grid->right_neighbor, tag,
+                 &u[IDX(0,0,m)],    1, y_slice, grid->left_neighbor,  tag,
                  comm, MPI_STATUS_IGNORE);
 
     // Send left column of my data to right halo of neighbor to my left
     // and receive right column of same neighbor's data into my left halo
-    MPI_Sendrecv(&u[1][0],          1, y_slice, grid->left_neighbor,  tag,
-                 &u[grid->nx-1][0], 1, y_slice, grid->right_neighbor, tag,
+    MPI_Sendrecv(&u[IDX(1,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+                 &u[IDX(nx-1,0,m)], 1, y_slice, grid->right_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 }
 
@@ -202,7 +207,7 @@ int main(int argc, char *argv[])
     int may_rerank = 1;         // allow processes to be re-ranked
     Cartesian_Block halo_grid;  // parameters for grid block including halo
     Cartesian_Block orig_grid;  // parameters for grid block without halo
-    double** u = NULL;          // array to hold grid block data
+    double* u = NULL;           // array to hold grid block data
     MPI_Comm comm2d;            // Cartesian communicator
     MPI_Datatype x_slice;       // datatype for horizontal slice (single row)
     MPI_Datatype y_slice;       // datatype for vertical slice (single column)
@@ -277,14 +282,8 @@ int main(int argc, char *argv[])
 
     // Create my portion of the grid.  For the exchange to work
     // properly we must have a constant stride in each dimension.
-    // This is accomplished by allocating an array of pointers then
-    // allocating the full data array to the first pointer.  The
-    // remaining pointers are set to point to the start of each "row"
-    // of contiguous data in the single linear array.
 
-    u = new double* [halo_grid.nx];
-    u[0] = new double [halo_grid.nx * halo_grid.ny];
-    for (int i = 1; i < halo_grid.nx; i++) u[i] = &u[0][i * halo_grid.ny];
+    u = new double [halo_grid.nx * halo_grid.ny];
 
     // Since this is a demonstration program, here we initialize the
     // local portion of the grid with values that indicate their
@@ -298,7 +297,7 @@ int main(int argc, char *argv[])
     {
         for (int i = 0; i < halo_grid.nx; i++)
         {
-            u[i][j] = rank + 0.01 * (i + halo_grid.x0)
+            u[IDX(i,j,halo_grid.ny)] = rank + 0.01 * (i + halo_grid.x0)
                 + 0.0001 * (j + halo_grid.y0);
         }
     }
@@ -342,7 +341,6 @@ int main(int argc, char *argv[])
 
     // Release memory and datatypes and then quit
 
-    delete [] u[0];
     delete [] u;
     MPI_Type_free(&x_slice);
     MPI_Type_free(&y_slice);

@@ -36,7 +36,7 @@ const int    DEFAULT_ITERATIONS = 500000;
 const int    DEFAULT_ITERATION_STRIDE = 100;
 const double DEFAULT_TOLERANCE = 1.0e-6;
 
-#define IDX(i,j) ((i)*(ny)+(j)) // presumes variable ny contains grid height
+#define IDX(i,j,stride) ((i)*(stride)+(j)) // row major
 
 //---------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ void show_grid(
     {
         for (int i = 0; i < nx; i++)
         {
-            printf(" %6.2f", v[IDX(i,j)]);
+            printf(" %6.2f", v[IDX(i,j,ny)]);
         }
         printf("\n");
     }
@@ -115,16 +115,16 @@ void impose_boundary_conditions(
     for (int i = 0; i < nx; i++)
     {
         double x = x0 + (xn - x0) * (grid->x0 + i) / (NX - 1);
-        if (grid->below_neighbor < 0) u[IDX(i,0)]    = 0.0;
-        if (grid->above_neighbor < 0) u[IDX(i,ny-1)] = 1.0 + x * (1.0 - x);
+        if (grid->below_neighbor < 0) u[IDX(i,0,ny)]    = 0.0;
+        if (grid->above_neighbor < 0) u[IDX(i,ny-1,ny)] = 1.0 + x * (1.0 - x);
     }
 
     // set left and right boundary values
     for (int j = 0; j < ny; j++)
     {
         double y = y0 + (yn - y0) * (grid->y0 + j) / (NY - 1);
-        if (grid->left_neighbor  < 0) u[IDX(0,j)]    = y;
-        if (grid->right_neighbor < 0) u[IDX(nx-1,j)] = y * y;
+        if (grid->left_neighbor  < 0) u[IDX(0,j,ny)]    = y;
+        if (grid->right_neighbor < 0) u[IDX(nx-1,j,ny)] = y * y;
     }
 }
 
@@ -142,8 +142,8 @@ void jacobi_sweep(
     {
         for (int j = 1; j < ny-1; j++)
         {
-            v[IDX(i,j)] = (u[IDX(i-1,j)] + u[IDX(i+1,j)]
-                           + u[IDX(i,j-1)] + u[IDX(i,j+1)]) / 4.0;
+            v[IDX(i,j,ny)] = (u[IDX(i-1,j,ny)] + u[IDX(i+1,j,ny)]
+                              + u[IDX(i,j-1,ny)] + u[IDX(i,j+1,ny)]) / 4.0;
         }
     }
 }
@@ -176,7 +176,7 @@ double norm(
     {
         for (int j = 1; j < ny-1; j++)
         {
-            s += fabs(v[IDX(i,j)] - u[IDX(i,j)]);
+            s += fabs(v[IDX(i,j,ny)] - u[IDX(i,j,ny)]);
         }
     }
     return s;
@@ -209,26 +209,26 @@ void exchange_halo_data(
     
     // Send top row of my data to bottom halo of neighbor above me and
     // receive bottom row of same neighbor's data into my top halo
-    MPI_Sendrecv(&u[IDX(0,ny-2)], 1, x_slice, grid->above_neighbor, tag,
-                 &u[IDX(0,0)],    1, x_slice, grid->below_neighbor, tag,
+    MPI_Sendrecv(&u[IDX(0,ny-2,ny)], 1, x_slice, grid->above_neighbor, tag,
+                 &u[IDX(0,0,ny)],    1, x_slice, grid->below_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
     
     // Send bottom row of my data to top halo of neighbor below me and
     // receive top row of same neighbor's data into my bottom halo
-    MPI_Sendrecv(&u[IDX(0,1)],    1, x_slice, grid->below_neighbor, tag,
-                 &u[IDX(0,ny-1)], 1, x_slice, grid->above_neighbor, tag,
+    MPI_Sendrecv(&u[IDX(0,1,ny)],    1, x_slice, grid->below_neighbor, tag,
+                 &u[IDX(0,ny-1,ny)], 1, x_slice, grid->above_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 
     // Send right column of my data to left halo of neighbor to my right
     // and receive left column of same neighbor's data into my right halo
-    MPI_Sendrecv(&u[IDX(nx-2,0)], 1, y_slice, grid->right_neighbor, tag,
-                 &u[IDX(0,0)],    1, y_slice, grid->left_neighbor,  tag,
+    MPI_Sendrecv(&u[IDX(nx-2,0,ny)], 1, y_slice, grid->right_neighbor, tag,
+                 &u[IDX(0,0,ny)],    1, y_slice, grid->left_neighbor,  tag,
                  comm, MPI_STATUS_IGNORE);
 
     // Send left column of my data to right halo of neighbor to my left
     // and receive right column of same neighbor's data into my left halo
-    MPI_Sendrecv(&u[IDX(1,0)],    1, y_slice, grid->left_neighbor,  tag,
-                 &u[IDX(nx-1,0)], 1, y_slice, grid->right_neighbor, tag,
+    MPI_Sendrecv(&u[IDX(1,0,ny)],    1, y_slice, grid->left_neighbor,  tag,
+                 &u[IDX(nx-1,0,ny)], 1, y_slice, grid->right_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 }
 
@@ -270,7 +270,7 @@ int main(int argc, char* argv[])
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    
+
     // Process command line
     int c;
     opterr = 0;  // suppress getopt error messages

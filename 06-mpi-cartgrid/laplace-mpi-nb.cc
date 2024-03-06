@@ -36,7 +36,7 @@ const int    DEFAULT_ITERATIONS = 500000;
 const int    DEFAULT_ITERATION_STRIDE = 100;
 const double DEFAULT_TOLERANCE = 1.0e-6;
 
-#define IDX(i,j) ((i)*(ny)+(j)) // presumes variable ny contains grid height
+#define IDX(i,j,stride) ((i)*(stride)+(j)) // row major
 
 //---------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ void show_grid(
     {
         for (int i = 0; i < nx; i++)
         {
-            printf(" %6.2f", v[IDX(i,j)]);
+            printf(" %6.2f", v[IDX(i,j,ny)]);
         }
         printf("\n");
     }
@@ -115,16 +115,16 @@ void impose_boundary_conditions(
     for (int i = 0; i < nx; i++)
     {
         double x = x0 + (xn - x0) * (grid->x0 + i) / (NX - 1);
-        if (grid->below_neighbor < 0) u[IDX(i,0)]    = 0.0;
-        if (grid->above_neighbor < 0) u[IDX(i,ny-1)] = 1.0 + x * (1.0 - x);
+        if (grid->below_neighbor < 0) u[IDX(i,0,ny)]    = 0.0;
+        if (grid->above_neighbor < 0) u[IDX(i,ny-1,ny)] = 1.0 + x * (1.0 - x);
     }
 
     // set left and right boundary values
     for (int j = 0; j < ny; j++)
     {
         double y = y0 + (yn - y0) * (grid->y0 + j) / (NY - 1);
-        if (grid->left_neighbor  < 0) u[IDX(0,j)]    = y;
-        if (grid->right_neighbor < 0) u[IDX(nx-1,j)] = y * y;
+        if (grid->left_neighbor  < 0) u[IDX(0,j,ny)]    = y;
+        if (grid->right_neighbor < 0) u[IDX(nx-1,j,ny)] = y * y;
     }
 }
 
@@ -142,8 +142,8 @@ void jacobi_sweep_interior(
     {
         for (int j = 2; j < ny-2; j++)
         {
-            v[IDX(i,j)] = (u[IDX(i-1,j)] + u[IDX(i+1,j)]
-                           + u[IDX(i,j-1)] + u[IDX(i,j+1)]) / 4.0;
+            v[IDX(i,j,ny)] = (u[IDX(i-1,j,ny)] + u[IDX(i+1,j,ny)]
+                              + u[IDX(i,j-1,ny)] + u[IDX(i,j+1,ny)]) / 4.0;
         }
     }
 }
@@ -162,20 +162,20 @@ void jacobi_sweep_edges(
     for (i = 1; i < nx-1; i++)
     {
         j = 1;
-        v[IDX(i,j)] = (u[IDX(i-1,j)] + u[IDX(i+1,j)]
-                       + u[IDX(i,j-1)] + u[IDX(i,j+1)]) / 4.0;
+        v[IDX(i,j,ny)] = (u[IDX(i-1,j,ny)] + u[IDX(i+1,j,ny)]
+                       + u[IDX(i,j-1,ny)] + u[IDX(i,j+1,ny)]) / 4.0;
         j = ny-2;
-        v[IDX(i,j)] = (u[IDX(i-1,j)] + u[IDX(i+1,j)]
-                       + u[IDX(i,j-1)] + u[IDX(i,j+1)]) / 4.0;
+        v[IDX(i,j,ny)] = (u[IDX(i-1,j,ny)] + u[IDX(i+1,j,ny)]
+                       + u[IDX(i,j-1,ny)] + u[IDX(i,j+1,ny)]) / 4.0;
     }
     for (j = 1; j < ny-1; j++)
     {
         i = 1;
-        v[IDX(i,j)] = (u[IDX(i-1,j)] + u[IDX(i+1,j)]
-                       + u[IDX(i,j-1)] + u[IDX(i,j+1)]) / 4.0;
+        v[IDX(i,j,ny)] = (u[IDX(i-1,j,ny)] + u[IDX(i+1,j,ny)]
+                       + u[IDX(i,j-1,ny)] + u[IDX(i,j+1,ny)]) / 4.0;
         i = nx-2;
-        v[IDX(i,j)] = (u[IDX(i-1,j)] + u[IDX(i+1,j)]
-                       + u[IDX(i,j-1)] + u[IDX(i,j+1)]) / 4.0;
+        v[IDX(i,j,ny)] = (u[IDX(i-1,j,ny)] + u[IDX(i+1,j,ny)]
+                       + u[IDX(i,j-1,ny)] + u[IDX(i,j+1,ny)]) / 4.0;
     }
 }
 
@@ -207,7 +207,7 @@ double norm(
     {
         for (int j = 1; j < ny-1; j++)
         {
-            s += fabs(v[IDX(i,j)] - u[IDX(i,j)]);
+            s += fabs(v[IDX(i,j,ny)] - u[IDX(i,j,ny)]);
         }
     }
     return s;
@@ -244,30 +244,30 @@ void exchange_halo_data(
     
     // Send top row of my data to bottom halo of neighbor above me and
     // receive bottom row of same neighbor's data into my top halo
-    MPI_Isend(&u[IDX(0,ny-2)], 1, x_slice, grid->above_neighbor, tag, comm,
+    MPI_Isend(&u[IDX(0,ny-2,ny)], 1, x_slice, grid->above_neighbor, tag, comm,
               &send_req[0]);
-    MPI_Irecv(&u[IDX(0,0)],    1, x_slice, grid->below_neighbor, tag, comm,
+    MPI_Irecv(&u[IDX(0,0,ny)],    1, x_slice, grid->below_neighbor, tag, comm,
               &recv_req[0]);
 
     // Send bottom row of my data to top halo of neighbor below me and
     // receive top row of same neighbor's data into my bottom halo
-    MPI_Isend(&u[IDX(0,1)],    1, x_slice, grid->below_neighbor, tag, comm,
+    MPI_Isend(&u[IDX(0,1,ny)],    1, x_slice, grid->below_neighbor, tag, comm,
               &send_req[1]);
-    MPI_Irecv(&u[IDX(0,ny-1)], 1, x_slice, grid->above_neighbor, tag, comm,
+    MPI_Irecv(&u[IDX(0,ny-1,ny)], 1, x_slice, grid->above_neighbor, tag, comm,
               &recv_req[1]);
 
     // Send right column of my data to left halo of neighbor to my right
     // and receive left column of same neighbor's data into my right halo
-    MPI_Isend(&u[IDX(nx-2,0)], 1, y_slice, grid->right_neighbor, tag, comm,
+    MPI_Isend(&u[IDX(nx-2,0,ny)], 1, y_slice, grid->right_neighbor, tag, comm,
               &send_req[2]);
-    MPI_Irecv(&u[IDX(0,0)],    1, y_slice, grid->left_neighbor,  tag, comm,
+    MPI_Irecv(&u[IDX(0,0,ny)],    1, y_slice, grid->left_neighbor,  tag, comm,
               &recv_req[2]);
 
     // Send left column of my data to right halo of neighbor to my left
     // and receive right column of same neighbor's data into my left halo
-    MPI_Isend(&u[IDX(1,0)],    1, y_slice, grid->left_neighbor,  tag, comm,
+    MPI_Isend(&u[IDX(1,0,ny)],    1, y_slice, grid->left_neighbor,  tag, comm,
               &send_req[3]);
-    MPI_Irecv(&u[IDX(nx-1,0)], 1, y_slice, grid->right_neighbor, tag, comm,
+    MPI_Irecv(&u[IDX(nx-1,0,ny)], 1, y_slice, grid->right_neighbor, tag, comm,
               &recv_req[3]);
 }
 
@@ -276,7 +276,7 @@ void exchange_halo_data(
 // Display program usage statement
 void usage(
     char* program   //program name string
-   )
+    )
 {
     printf("Usage: %s ", program);
     printf("[-n N] [-e TOL] [-m MAXITER] [-s ITERATION_STRIDE] [-v]\n");
@@ -351,7 +351,7 @@ int main(int argc, char* argv[])
     comm2d = mpi_cart_setup(num_proc, nx, ny, may_rerank, &my_rank, dims,
                             periodic, &x_slice, &y_slice, &halo_grid,
                             &orig_grid);
-    
+
     // Allocate memory for grid and copy of grid
     double* u = new double [halo_grid.nx * halo_grid.ny];
     double* v = new double [halo_grid.nx * halo_grid.ny];
