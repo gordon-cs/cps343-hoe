@@ -234,20 +234,25 @@ void writeFile(const char* fname, const char* dname, double* u,
 
     // Create property list for output file using data from MPI communicator
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    if (plist_id < 0) fprintf(stderr, "Could not create property list\n");
     status = H5Pset_fapl_mpio(plist_id, comm, MPI_INFO_NULL);
     CHKERR(status, "H5Pset_fapl_mpio()");
 
     // Create the output file - property list not needed after this
     file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    H5Pclose(plist_id);
+    if (file_id < 0) fprintf(stderr, "Could not output file\n");
+    CHKERR(H5Pclose(plist_id), "H5Pclose()");
 
     // Create output file dataspace and dataset that will hold data from all
     // processes.  Use dimensions for entire grid.
     dimsf[0] = NX;
     dimsf[1] = NY;
     dataspace_id = H5Screate_simple(2, dimsf, NULL);
+    if (dataspace_id < 0) fprintf(stderr, "Could not create dataspace\n");
+
     dataset_id = H5Dcreate(file_id, dname, H5T_IEEE_F64LE, dataspace_id,
                            H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (dataset_id < 0) fprintf(stderr, "Could not create dataset\n");
 
     // Create local dataspace corresponding to process's portion of the
     // global dataspace.  Use the actual dimensions for the portion of
@@ -255,6 +260,7 @@ void writeFile(const char* fname, const char* dname, double* u,
     dimsm[0] = halo_grid->nx;
     dimsm[1] = halo_grid->ny;
     memspace_id = H5Screate_simple(2, dimsm, NULL);
+    if (memspace_id < 0) fprintf(stderr, "Could not create memspace\n");
 
     // Define the hyperslab in the global dataspace corresponding to the
     // data to be written by this process.
@@ -275,12 +281,20 @@ void writeFile(const char* fname, const char* dname, double* u,
                                  count, NULL);
     CHKERR(status, "H5Sselect_hyperslab() memspace");
 
+    // Set transfer mode
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    if (plist_id < 0) fprintf(stderr, "Could not create property list\n");
+    //status = H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+    status = H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_INDEPENDENT);
+    CHKERR(status, "H5Pset_dxpl_mpio()");
+
     // Finally - we can write the data!
     status = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, memspace_id,
-                      dataspace_id, H5P_DEFAULT, u);
+                      dataspace_id, plist_id, u);
     CHKERR(status, "H5Dwrite()");
 
     // All done -- release all remaining open dataspaces, datasets, etc.
+    CHKERR(H5Pclose(plist_id), "H5Pclose()");
     CHKERR(H5Sclose(memspace_id), "H5Sclose()");
     CHKERR(H5Dclose(dataset_id), "H5Dclose()");
     CHKERR(H5Sclose(dataspace_id), "H5Sclose()");
