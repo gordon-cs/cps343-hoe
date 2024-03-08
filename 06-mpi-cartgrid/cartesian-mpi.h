@@ -3,9 +3,9 @@
 
 #include <mpi.h>
 
-// Define structure to hold grid parameters.  Each process has its own
-// grid that corresponds to a portion of the domain.  These parameters
-// apply locally and not to the entire domain.
+// Define structure to hold Cartesian communicator parameters.  Each process
+// has its own grid that corresponds to a portion of the domain.  These
+// parameters apply locally and not to the entire domain.
 
 typedef struct Cartesian_Block
 {
@@ -18,9 +18,7 @@ typedef struct Cartesian_Block
     int right_neighbor; // rank of process handling block to right
 } Cartesian_Block;
 
-// Function prototypes
-
-void decompose1d(int n, int m, int i, int* s, int* e);
+// Main function prototype
 
 MPI_Comm mpi_cart_setup(int num_proc, int NX, int NY, int may_rerank,
                         int* rank, int* dims, int* periodic,

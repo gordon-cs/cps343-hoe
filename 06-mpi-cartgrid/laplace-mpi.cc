@@ -150,8 +150,8 @@ void jacobi_sweep(
 
 //---------------------------------------------------------------------------
 
-// Copy interior of u into interior of v
-void update(
+// Copy grid data
+void copy_grid(
     double* v,  // destination grid data
     double* u,  // source grid data
     int nx,     // number of x grid points 
@@ -318,7 +318,7 @@ int main(int argc, char* argv[])
     // Prepare grid
     init_grid(&halo_grid, u);
     impose_boundary_conditions(0.0, 1.0, 0.0, 1.0, nx, ny, &halo_grid, u);
-    update(v, u, halo_grid.nx, halo_grid.ny);
+    copy_grid(v, u, halo_grid.nx, halo_grid.ny);
 
     if (verbosity > 1) dump_grid(my_rank, num_proc, &halo_grid, u, comm2d);
 
@@ -330,6 +330,8 @@ int main(int argc, char* argv[])
     {
         exchange_halo_data(u, &halo_grid, x_slice, y_slice, comm2d);
         jacobi_sweep(v, u, halo_grid.nx, halo_grid.ny);
+
+        // check to see how much we've changed from prior estimate
         if (k % iterations_between_checks == 0)
         {
             double my_alpha = norm(u, v, halo_grid.nx, halo_grid.ny);
@@ -338,7 +340,7 @@ int main(int argc, char* argv[])
             if (verbosity > 1)
                 dump_grid(my_rank, num_proc, &halo_grid, u, comm2d);
         }
-        update(u, v, halo_grid.nx, halo_grid.ny);
+        copy_grid(u, v, halo_grid.nx, halo_grid.ny);
     }
     double t1 = MPI_Wtime();
 

@@ -130,7 +130,9 @@ void impose_boundary_conditions(
 
 //---------------------------------------------------------------------------
 
-// Perform a single Jacobi Sweep on grid u storing results in grid v
+// Perform a single Jacobi Sweep on the interior of grid u, storing results
+// in the interior grid v.  Since only interior points are computed, no halo
+// data is accessed.
 void jacobi_sweep_interior(
     double* v,  // updated grid data
     double* u,  // grid data
@@ -150,13 +152,15 @@ void jacobi_sweep_interior(
 
 //---------------------------------------------------------------------------
 
-// Perform a single Jacobi Sweep on grid u storing results in grid v
+// Perform a single Jacobi Sweep on the portion of grid u adjacent to halo
+// data, storing results in the correspoinding locations of grid v.  This
+// must be done after the halo data has been updated.
 void jacobi_sweep_edges(
     double* v,  // updated grid data
     double* u,  // grid data
     int nx,     // number of x grid points 
     int ny      // number of y grid points
-   )
+    )
 {
     int i, j;
     for (i = 1; i < nx-1; i++)
@@ -181,8 +185,8 @@ void jacobi_sweep_edges(
 
 //---------------------------------------------------------------------------
 
-// Copy interior of u into interior of v
-void update(
+// Copy grid data
+void copy_grid(
     double* v,  // destination grid data
     double* u,  // source grid data
     int nx,     // number of x grid points 
@@ -359,7 +363,7 @@ int main(int argc, char* argv[])
     // Prepare grid
     init_grid(&halo_grid, u);
     impose_boundary_conditions(0.0, 1.0, 0.0, 1.0, nx, ny, &halo_grid, u);
-    update(v, u, halo_grid.nx, halo_grid.ny);
+    copy_grid(v, u, halo_grid.nx, halo_grid.ny);
 
     if (verbosity > 1) dump_grid(my_rank, num_proc, &halo_grid, u, comm2d);
 
@@ -369,17 +373,21 @@ int main(int argc, char* argv[])
     double alpha = 2 * tolerance;
     while (k++ < max_iter && alpha > tolerance)
     {
+        // start sending and receivin data from neighbors and wait until
+        // local data has been successfully sent
         exchange_halo_data(u, &halo_grid, x_slice, y_slice, comm2d,
                            send_req, recv_req);
         MPI_Waitall(4, send_req, MPI_STATUSES_IGNORE);
 
         // update all interior locations that don't need boundary/halo data
+        // and then wait until all halo data has been received
         jacobi_sweep_interior(v, u, halo_grid.nx, halo_grid.ny);
         MPI_Waitall(4, recv_req, MPI_STATUSES_IGNORE);
 
         // update locations that need halo data
         jacobi_sweep_edges(v, u, halo_grid.nx, halo_grid.ny);
 
+        // check to see how much we've changed from prior estimate
         if (k % iterations_between_checks == 0)
         {
             double my_alpha = norm(u, v, halo_grid.nx, halo_grid.ny);
@@ -388,7 +396,7 @@ int main(int argc, char* argv[])
             if (verbosity > 1)
                 dump_grid(my_rank, num_proc, &halo_grid, u, comm2d);
         }
-        update(u, v, halo_grid.nx, halo_grid.ny);
+        copy_grid(u, v, halo_grid.nx, halo_grid.ny);
     }
     double t1 = MPI_Wtime();
 

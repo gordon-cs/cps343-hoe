@@ -2,9 +2,7 @@
  * Setup MPI Cartesian communicator
  */
 
-// Header file defines Cartesian_Block structure
-
-#include "cartesian-mpi.h"
+#include "cartesian-mpi.h"   // defines Cartesian_Block structure
 
 /*----------------------------------------------------------------------------
  * Computes the starting and ending displacements for the ith
@@ -35,7 +33,7 @@
  * "Using MPI" by Gropp et al.  It has been adapted to use
  * 0-based indexing.
  */
-void decompose1d(int n, int m, int i, int* s, int* e)
+static void decompose1d(int n, int m, int i, int* s, int* e)
 {
     const int length  = n / m;
     const int deficit = n % m;
@@ -45,7 +43,7 @@ void decompose1d(int n, int m, int i, int* s, int* e)
 }
 
 /*----------------------------------------------------------------------------
- * Set up Cartesian grid of of processes
+ * Create and initalize Cartesian communicator
  *
  * Input:
  *   int num_proc    - number of processes
@@ -103,10 +101,9 @@ MPI_Comm mpi_cart_setup(int num_proc, int NX, int NY, int may_rerank,
     orig_grid->nx = orig_grid->x1 - orig_grid->x0 + 1;
     orig_grid->ny = orig_grid->y1 - orig_grid->y0 + 1;
 
-    // Adjust domain parameters to account for inter-domain halo
-    // boundary data.  If we have a neighbor in a given direction
-    // (rank of neighbor is non-negative) then we need to adjust the
-    // starting or ending index.
+    // Adjust domain parameters to account for inter-domain halo boundary
+    // data.  If we have a neighbor in a given direction (rank of neighbor
+    // is non-negative) then we need to adjust the starting or ending index.
 
     halo_grid->left_neighbor  = orig_grid->left_neighbor;
     halo_grid->right_neighbor = orig_grid->right_neighbor;

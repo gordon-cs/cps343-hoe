@@ -98,8 +98,8 @@ void jacobi_sweep(
 
 //---------------------------------------------------------------------------
 
-// Copy interior of u into interior of v
-void update(
+// Copy grid data
+void copy_grid(
     double* v,  // destination grid data
     double* u,  // source grid data
     int nx,     // number of x grid points 
@@ -193,7 +193,7 @@ int main(int argc, char* argv[])
     // Prepare grid
     init_grid(nx, ny, u);
     impose_boundary_conditions(0.0, 1.0, 0.0, 1.0, nx, ny, u);
-    update(v, u, nx, ny);
+    copy_grid(v, u, nx, ny);
 
     // Do Jacobi iterations until convergence or too many iterations
     double t0 = wtime();
@@ -202,12 +202,14 @@ int main(int argc, char* argv[])
     while (k++ < max_iter && alpha > tolerance)
     {
         jacobi_sweep(v, u, nx, ny);
+
+        // check to see how much we've changed from prior estimate
         if (k % iterations_between_checks == 0)
         {
             alpha = norm(u, v, nx, ny);
             if (verbosity > 0) printf("%6d %e\n", k, alpha);
         }
-        update(u, v, nx, ny);
+        copy_grid(u, v, nx, ny);
     }
     double t1 = wtime();
 

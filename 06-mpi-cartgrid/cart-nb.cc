@@ -3,7 +3,7 @@
  * Department of Mathematics and Computer Science
  * Gordon College, 255 Grapevine Road, Wenham MA 01984-1899
  * Written: August 2012.
- * Revised: April 2013, March 2016, March 2018, March 2020.
+ * Revised: April 2013, March 2016, March 2018, March 2020, March 2024.
  *
  * $Smake: mpic++ -Wall -O2 -o %F %f
  *
@@ -52,11 +52,12 @@
  *      |   |   |   |   |   |   |   |   |   |
  *   9  *---*---*---*---*---*---*---*---*---*
  *
- * Below are the four partitioned grid parts.  In each grid subdomain,
- * "O,A,B,C,D" represent grid points that are computed.  The points
- * labeled "A,B,C,D" are the grid points adjacent to an interior
- * boundary so they must be copied to added positions in adjacent
- * subdomains, indicated by "a,b,c,d" (the halo/ghost boundaries).
+ * Below are the four parts of the partitioned grid.  In each grid
+ * subdomain, "O,A,B,C,D" represent grid points that are computed.
+ * The points labeled "A,B,C,D" are the grid points adjacent to an
+ * interior boundary so they must be copied to added positions in
+ * adjacent subdomains, indicated by "a,b,c,d" (the halo/ghost
+ * boundaries).
  *
  *      0   1   2   3   4  5   4  5   6   7   8   9
  *
@@ -70,15 +71,15 @@
  *      |   |   |   |   |         |   |   |   |   |
  *   4  *---A---A---A---A--b   a--B---B---B---B---*   "O" is interior node
  *      |   |   |   |   |         |   |   |   |   |
- *   5  *   d   d   d   d         c   c   c   c   *   "A,B,C,D" are computed
+ *   5  *   d   d   d   d  x   x  c   c   c   c   *   "A,B,C,D" are computed
  *                                                    interior boundary nodes
- *   4  *   a   a   a   a         b   b   b   b   *
+ *   4  *   a   a   a   a  x   x  b   b   b   b   *
  *      |   |   |   |   |         |   |   |   |   |   "a,b,c,d" are copies of
  *   5  *---D---D---D---D--c   d--C---C---C---C---*   interior boundary nodes
  *      |   |   |   |   |         |   |   |   |   |
- *   6  *---O---O---O---D--c   d--C---O---O---O---*
- *      |   |   |   |   |         |   |   |   |   |
- *   7  *---O---O---O---D--c   d -C---O---O---O---*
+ *   6  *---O---O---O---D--c   d--C---O---O---O---*   "x" marks locations that
+ *      |   |   |   |   |         |   |   |   |   |   are allocated but unused
+ *   7  *---O---O---O---D--c   d -C---O---O---O---*   by a five-point stencil
  *      |   |   |   |   |         |   |   |   |   |
  *   8  *---O---O---O---D--c   d--C---O---O---O---*
  *      |   |   |   |   |         |   |   |   |   |
@@ -174,31 +175,31 @@ void exchange_halo_data(double* u, Cartesian_Block* grid,
 
     // Send top row of my data to bottom halo of neighbor above me and
     // receive bottom row of same neighbor's data into my top halo
-    MPI_Isend(&u[IDX(0,ny-2,m)], 1, x_slice, grid->above_neighbor, tag, comm,
-              &send_req[0]);
-    MPI_Irecv(&u[IDX(0,0,m)],    1, x_slice, grid->below_neighbor, tag, comm,
-              &recv_req[0]);
+    MPI_Isend(&u[IDX(0,ny-2,m)], 1, x_slice, grid->above_neighbor, tag,
+              comm, &send_req[0]);
+    MPI_Irecv(&u[IDX(0,0,m)],    1, x_slice, grid->below_neighbor, tag,
+              comm, &recv_req[0]);
 
     // Send bottom row of my data to top halo of neighbor below me and
     // receive top row of same neighbor's data into my bottom halo
-    MPI_Isend(&u[IDX(0,1,m)],    1, x_slice, grid->below_neighbor, tag, comm,
-              &send_req[1]);
-    MPI_Irecv(&u[IDX(0,ny-1,m)], 1, x_slice, grid->above_neighbor, tag, comm,
-              &recv_req[1]);
+    MPI_Isend(&u[IDX(0,1,m)],    1, x_slice, grid->below_neighbor, tag,
+              comm, &send_req[1]);
+    MPI_Irecv(&u[IDX(0,ny-1,m)], 1, x_slice, grid->above_neighbor, tag,
+              comm, &recv_req[1]);
 
     // Send right column of my data to left halo of neighbor to my right
     // and receive left column of same neighbor's data into my right halo
-    MPI_Isend(&u[IDX(nx-2,0,m)], 1, y_slice, grid->right_neighbor, tag, comm,
-              &send_req[2]);
-    MPI_Irecv(&u[IDX(0,0,m)],    1, y_slice, grid->left_neighbor,  tag, comm,
-              &recv_req[2]);
+    MPI_Isend(&u[IDX(nx-2,0,m)], 1, y_slice, grid->right_neighbor, tag,
+              comm, &send_req[2]);
+    MPI_Irecv(&u[IDX(0,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+              comm, &recv_req[2]);
 
     // Send left column of my data to right halo of neighbor to my left
     // and receive right column of same neighbor's data into my left halo
-    MPI_Isend(&u[IDX(1,0,m)],    1, y_slice, grid->left_neighbor,  tag, comm,
-              &send_req[3]);
-    MPI_Irecv(&u[IDX(nx-1,0,m)], 1, y_slice, grid->right_neighbor, tag, comm,
-              &recv_req[3]);
+    MPI_Isend(&u[IDX(1,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+              comm, &send_req[3]);
+    MPI_Irecv(&u[IDX(nx-1,0,m)], 1, y_slice, grid->right_neighbor, tag,
+              comm, &recv_req[3]);
 }
 
 //--------------------------------------------------------------------------
@@ -262,8 +263,8 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    // Override default process grid dimensions if requested.  Make
-    // sure that if the user specified block grid dimensions they are
+    // Override default Cartesian communicator dimensions if requested.
+    // Make sure that if the user specified block grid dimensions they are
     // consistent with the number of processes.
 
     if (argc >= 5)
@@ -282,26 +283,25 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Set up Cartesian grid of processors.  A new communicator is
-    // created and our rank may be adjusted relative to this new
-    // communicator.
+    // Set up Cartesian communicator.  My rank may be adjusted relative
+    // to this new communicator.
 
     comm2d = mpi_cart_setup(num_proc, NX, NY, may_rerank, &rank, dims,
                             periodic, &x_slice, &y_slice, &halo_grid,
                             &orig_grid);
 
-    // Create my portion of the grid.  For the exchange to work
-    // properly we must have a constant stride in each dimension.
+    // Create my portion of the grid, including the halo.  For exchanges
+    // to work properly we must have a constant stride in each dimension.
 
     u = new double [halo_grid.nx * halo_grid.ny];
 
-    // Since this is a demonstration program, here we initialize the
-    // local portion of the grid with values that indicate their
-    // original position in the grid.  Assuming nx and ny are each
-    // less than 100 these values have the form R.XXYY where: R is the
-    // rank of of the process that created the data, XX is the x
-    // coordinate in the grid (0 is at left), and YY is the y
-    // coordinate in the grid (0 is at bottom)
+    // Since this is a demonstration program, we initialize my portion
+    // of the grid with values that indicate their original position in
+    // the grid.  We assume that nx and ny are each less than 100 so the
+    // values in the grid can have the form R.XXYY where
+    //  - R is the rank of of the process that created the data,
+    //  - XX is the x coordinate in the grid (0 is at left), and
+    //  - YY is the y coordinate in the grid (0 is at bottom)
 
     for (int j = 0; j < halo_grid.ny; j++)
     {
@@ -312,8 +312,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Ready to start exchanging data.  Wait for my turn and then
-    // display my portion of the grid.
+    // Now we're ready to start exchanging data.  Wait for my turn and
+    // then display my portion of the grid.
 
     if (rank == 0)
     {
