@@ -98,27 +98,27 @@ void countingsort(size_t offset, size_t n, int *source, int *dest)
     // set count[i] equal to the number of elements with bytes equal to i
     bp = (unsigned char *) source + offset;
     for (i = 0; i < n; i++) {
-	cp = count + *bp;
-	(*cp)++;
-	bp += datasize;
+        cp = count + *bp;
+        (*cp)++;
+        bp += datasize;
     }
 
     // reset count[i] to be equal to the number of elements with bytes
     // less than or equal to i
     for (i = 0, sum = 0, cp = count; i < 256; i++) {
-	tmp = *cp;
-	*cp++ = sum;
-	sum += tmp;
+        tmp = *cp;
+        *cp++ = sum;
+        sum += tmp;
     }
 
     // place values in proper place in dest array
     bp = (unsigned char *) source + offset;
     sp = source;
     for (i = 0; i < n; i++) {
-	cp = count + *bp;
-	dest[*cp] = *sp++;
-	(*cp)++;
-	bp += datasize;
+        cp = count + *bp;
+        dest[*cp] = *sp++;
+        (*cp)++;
+        bp += datasize;
     }
 }
 
@@ -162,9 +162,9 @@ void radixsort(int *source, unsigned int n)
 //    0  if success; -1 to indicate error
 
 int psrsSort(int* inList, int inLen, int* outList, int* outLen, int master,
-	     MPI_Comm comm, bool doTiming)
+             MPI_Comm comm, bool doTiming)
 {
-    enum { SPLITTER, BIN };
+    enum {SPLITTER, BIN};
     int rank;              // process id
     int size;              // number of processes
     int* sample  = NULL;   // list of samples from local sorted list
@@ -213,8 +213,8 @@ int psrsSort(int* inList, int inLen, int* outList, int* outLen, int master,
     splitter = new int [size - 1];
     if (rank == master)
     {
-	radixsort(samples, size * size);
-	for (int i = 1; i < size; i++) splitter[i - 1] = samples[size * i];
+        radixsort(samples, size * size);
+        for (int i = 1; i < size; i++) splitter[i - 1] = samples[size * i];
     }
     t0 = MPI_Wtime();
     MPI_Bcast(splitter, size - 1, MPI_INT, master, comm);
@@ -229,9 +229,9 @@ int psrsSort(int* inList, int inLen, int* outList, int* outLen, int master,
     n = m = 0;
     for (int i = 0; i < size - 1; i++)
     {
-	while (m < inLen && inList[m] < splitter[i]) m++;
-	binSize[i] = m - n;
-	n = m;
+        while (m < inLen && inList[m] < splitter[i]) m++;
+        binSize[i] = m - n;
+        n = m;
     }
     binSize[size - 1] = inLen - n;
     double time_split = MPI_Wtime() - t0;
@@ -256,11 +256,11 @@ int psrsSort(int* inList, int inLen, int* outList, int* outLen, int master,
     for (int i = 0; i < size; i++)
     {
         int j = i * size + rank;
-	MPI_Sendrecv(&inList[n],  binSize[i],  MPI_INT, i, BIN,
+        MPI_Sendrecv(&inList[n],  binSize[i],  MPI_INT, i, BIN,
                      &outList[m], binSizes[j], MPI_INT, i, BIN,
                      comm, MPI_STATUS_IGNORE);
-	n += binSize[i];
-	m += binSizes[j];
+        n += binSize[i];
+        m += binSizes[j];
     }
     double time_sendrecv = MPI_Wtime() - t0;
     delete [] binSizes;
@@ -333,13 +333,13 @@ int main(int argc, char* argv[])
     if (argc != 2)
     {
         fprintf(stderr, "usage: %s [-t] N\n", argv[0]);
-	exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
     nelem = atol(argv[1]);
     if (nelem <= 0)
     {
-	fprintf(stderr, "Error: list length N must be positive\n");
-	exit(EXIT_FAILURE);
+        fprintf(stderr, "Error: list length N must be positive\n");
+        exit(EXIT_FAILURE);
     }
 
     // determine the length of the local portion of the list
@@ -365,19 +365,19 @@ int main(int argc, char* argv[])
     // display sorted list if it is fairly short
     if (nelem <= 100)
     {
-	for (int r = 0; r < size; r++)
-	{
-	    if (rank == r)
-	    {
-		for (int i = 0; i < outLen; i++)
-		{
+        for (int r = 0; r < size; r++)
+        {
+            if (rank == r)
+            {
+                for (int i = 0; i < outLen; i++)
+                {
                     printf("rank %2d: list[%3d] = %12d\n",
                            rank, i, outList[i]);
-		}
+                }
                 fflush(stdout);
-	    }
-	    MPI_Barrier(MPI_COMM_WORLD);
-	}
+            }
+            MPI_Barrier(MPI_COMM_WORLD);
+        }
     }
 
     MPI_Finalize();
