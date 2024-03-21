@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
     cudaMemcpy(d_b, b, vector_size, cudaMemcpyHostToDevice);
 
     // do calculation on device
-    int block_size = 1024;
+    int block_size = 16;
     int num_blocks = (n - 1 + block_size) / block_size;
     add_vectors<<<num_blocks, block_size>>>(d_c, d_a, d_b, n);
 
