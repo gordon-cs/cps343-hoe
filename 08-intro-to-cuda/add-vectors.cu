@@ -31,75 +31,75 @@ __global__ void add_vectors(
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
     // Only do calculation if we have real data to work with
-    if ( idx < n ) c[idx] = a[idx] + b[idx];
+    if (idx < n) c[idx] = a[idx] + b[idx];
 }
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 // Main program executes on host device
 
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
     // determine vector length
     int n = 10;      // set default length
-    if ( argc > 1 )
+    if (argc > 1)
     {
-        n = atoi( argv[1] );  // override default length
-        if ( n <= 0 )
+        n = atoi(argv[1]);  // override default length
+        if (n <= 0)
         {
-            fprintf( stderr, "Vector length must be positive\n" );
+            fprintf(stderr, "Vector length must be positive\n");
             return EXIT_FAILURE;
         }
     }
 
     // determine vector size in bytes
-    const size_t vector_size = n * sizeof( float );
+    const size_t vector_size = n * sizeof(float);
 
     // declare pointers to vectors in host memory and allocate memory
     float *a, *b, *c;
-    a = (float*) malloc( vector_size );
-    b = (float*) malloc( vector_size );
-    c = (float*) malloc( vector_size );
+    a = (float*) malloc(vector_size);
+    b = (float*) malloc(vector_size);
+    c = (float*) malloc(vector_size);
 
     // declare pointers to vectors in device memory and allocate memory
-    float *a_d, *b_d, *c_d;
-    cudaMalloc( (void**) &a_d, vector_size );
-    cudaMalloc( (void**) &b_d, vector_size );
-    cudaMalloc( (void**) &c_d, vector_size );
+    float *d_a, *d_b, *d_c;
+    cudaMalloc((void**) &d_a, vector_size);
+    cudaMalloc((void**) &d_b, vector_size);
+    cudaMalloc((void**) &d_c, vector_size);
 
     // initialize vectors and copy them to device
-    for ( int i = 0; i < n; i++ )
+    for (int i = 0; i < n; i++)
     {
         a[i] =   1.0 * i;
         b[i] = 100.0 * i;
     }
-    cudaMemcpy( a_d, a, vector_size, cudaMemcpyHostToDevice );
-    cudaMemcpy( b_d, b, vector_size, cudaMemcpyHostToDevice );
+    cudaMemcpy(d_a, a, vector_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, b, vector_size, cudaMemcpyHostToDevice);
 
     // do calculation on device
-    int block_size = 16;
-    int num_blocks = ( n - 1 + block_size ) / block_size;
-    add_vectors<<< num_blocks, block_size >>>( c_d, a_d, b_d, n );
+    int block_size = 1024;
+    int num_blocks = (n - 1 + block_size) / block_size;
+    add_vectors<<<num_blocks, block_size>>>(d_c, d_a, d_b, n);
 
     // retrieve result from device and store on host
-    cudaMemcpy( c, c_d, vector_size, cudaMemcpyDeviceToHost );
+    cudaMemcpy(c, d_c, vector_size, cudaMemcpyDeviceToHost);
 
     // print results for vectors up to length 100
-    if ( n <= 100 )
+    if (n <= 100)
     {
-        for ( int i = 0; i < n; i++ )
+        for (int i = 0; i < n; i++)
         {
-            printf( "%8.2f + %8.2f = %8.2f\n", a[i], b[i], c[i] );
+            printf("%8.2f + %8.2f = %8.2f\n", a[i], b[i], c[i]);
         }
     }
 
     // cleanup and quit
-    cudaFree( a_d );
-    cudaFree( b_d );
-    cudaFree( c_d );
-    free( a );
-    free( b );
-    free( c );
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_c);
+    free(a);
+    free(b);
+    free(c);
   
     return 0;
 }
