@@ -47,16 +47,16 @@ __global__ void matmulGlobal(FLOAT* c, FLOAT* a, FLOAT* b, int n)
 // Matrix-matrix kernel (shared memory)
 __global__ void matmulShared(FLOAT* c, FLOAT* a, FLOAT* b, int n)
 {
-    __shared__ FLOAT a_s[BlockDim][BlockDim];
-    __shared__ FLOAT b_s[BlockDim][BlockDim];
+    __shared__ FLOAT s_a[BlockDim][BlockDim];
+    __shared__ FLOAT s_b[BlockDim][BlockDim];
 
     // element of matrix c to compute
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
-    if (col >= n || row >= n) return;
+    if (col >= n || row >= n) return; // nothing to do
 
-    // loop over blocks from block row of matrix a and
-    // block column of matrix b.
+    // loop over row of blocks in matrix a and column of blocks
+    // in matrix b; storing blocks in shared mem, 
     FLOAT sum = (FLOAT) 0.0;
     const int numBlocks = (n + BlockDim - 1) / BlockDim;
     for (int m = 0; m < numBlocks; m++)
@@ -66,8 +66,8 @@ __global__ void matmulShared(FLOAT* c, FLOAT* a, FLOAT* b, int n)
         int r = m * BlockDim + threadIdx.y;
         c = c < n ? c : n - 1; // need to stay inbounds
         r = r < n ? r : n - 1;
-        a_s[threadIdx.y][threadIdx.x] = a[IDX(row,c,n)];
-        b_s[threadIdx.y][threadIdx.x] = b[IDX(r,col,n)];
+        s_a[threadIdx.y][threadIdx.x] = a[IDX(row,c,n)];
+        s_b[threadIdx.y][threadIdx.x] = b[IDX(r,col,n)];
         __syncthreads();
 
         // length of this part of row-column product is BlockDim
@@ -77,7 +77,7 @@ __global__ void matmulShared(FLOAT* c, FLOAT* a, FLOAT* b, int n)
         // compute this part of row-column product
         for (int k = 0; k < len; k++)
         {
-            sum += a_s[threadIdx.y][k] * b_s[k][threadIdx.x];
+            sum += s_a[threadIdx.y][k] * s_b[k][threadIdx.x];
         }
         __syncthreads();
     }
