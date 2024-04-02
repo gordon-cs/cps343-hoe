@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PATH=/shared/cuda-samples/bin/x86_64/linux/release:$PATH
-gpus="QuadroP1000 QuadroRTX3000"
+gpus="P1000 RTX3000 RTXA5000"
 sizes="08 16 32"
 types="Global Shared"
 dim0=1580
@@ -20,7 +20,7 @@ do
 	# sweep through a range of matrix dimesions
 	for ((n=dim0;n<=dim1;n++))
 	do
-	    srun --gres=gpu:${gpu} ./matmul$k $n | tee tmp.$$
+	    srun -p mp,ml --gres=gpu:${gpu} ./matmul$k $n | tee tmp.$$
 	    for t in ${types}
 	    do
 		echo "$n $(grep $t tmp.$$ | awk '{print $5}')" >> $t.${gpu}.$k
