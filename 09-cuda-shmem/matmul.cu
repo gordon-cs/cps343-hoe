@@ -1,4 +1,4 @@
-// $Smake: nvcc -Xptxas -v -O2 -o %F %f wtime.c
+// $Smake: nvcc -DBS=32 -O3 -o %F %f wtime.c
 //
 // Demonstrates use of device shared memory in matrix-matrix multiplication.
 //
@@ -11,7 +11,7 @@
 #include <cuda.h>
 #include "wtime.h"
 
-#define IDX(i,j,n) ((i)*(n)+j)
+#define IDX(i,j,n) ((i)*(n)+j) // row major
 
 #if !defined(BS)
 const int BlockDim = 16;
@@ -30,9 +30,9 @@ typedef float FLOAT;
 __global__ void matmulGlobal(FLOAT* c, FLOAT* a, FLOAT* b, int n)
 {
     // element of matrix c to compute
-    const int col = blockIdx.x * blockDim.x + threadIdx.x;
     const int row = blockIdx.y * blockDim.y + threadIdx.y;
-    if (col >= n || row >= n) return;
+    const int col = blockIdx.x * blockDim.x + threadIdx.x;
+    if (col >= n || row >= n) return; // nothing to do
 
     FLOAT sum = (FLOAT) 0.0;
     for (int k = 0; k < n; k++)
@@ -51,9 +51,8 @@ __global__ void matmulShared(FLOAT* c, FLOAT* a, FLOAT* b, int n)
     __shared__ FLOAT s_b[BlockDim][BlockDim];
 
     // element of matrix c to compute
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
-    if (col >= n || row >= n) return; // nothing to do
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     // loop over row of blocks in matrix a and column of blocks
     // in matrix b; storing blocks in shared mem, 
@@ -62,20 +61,16 @@ __global__ void matmulShared(FLOAT* c, FLOAT* a, FLOAT* b, int n)
     for (int m = 0; m < numBlocks; m++)
     {
         // copy block from matrix to shared memory
-        int c = m * BlockDim + threadIdx.x;
-        int r = m * BlockDim + threadIdx.y;
-        c = c < n ? c : n - 1; // need to stay inbounds
-        r = r < n ? r : n - 1;
-        s_a[threadIdx.y][threadIdx.x] = a[IDX(row,c,n)];
-        s_b[threadIdx.y][threadIdx.x] = b[IDX(r,col,n)];
+        s_a[threadIdx.y][threadIdx.x] = 0.0;
+        s_b[threadIdx.y][threadIdx.x] = 0.0;
+        int r = m * blockDim.y + threadIdx.y;
+        int c = m * blockDim.x + threadIdx.x;
+        if (row < n && c < n) s_a[threadIdx.y][threadIdx.x] = a[IDX(row,c,n)];
+        if (r < n && col < n) s_b[threadIdx.y][threadIdx.x] = b[IDX(r,col,n)];
         __syncthreads();
 
-        // length of this part of row-column product is BlockDim
-        // except for last block when it may be smaller
-        const int len = (m == numBlocks - 1 ? n - m * BlockDim : BlockDim);
-
         // compute this part of row-column product
-        for (int k = 0; k < len; k++)
+        for (int k = 0; k < BlockDim; k++)
         {
             sum += s_a[threadIdx.y][k] * s_b[k][threadIdx.x];
         }
@@ -83,7 +78,7 @@ __global__ void matmulShared(FLOAT* c, FLOAT* a, FLOAT* b, int n)
     }
 
     // all done; store computed element in matrix c
-    c[IDX(row,col,n)] = sum;
+    if (row < n && col < n) c[IDX(row,col,n)] = sum;
 }
 
 //-----------------------------------------------------------------------------
@@ -108,6 +103,7 @@ void initializeMatrix(FLOAT* a, int m, int n, FLOAT sf = 1.0)
         for (int j = 0; j < n; j++)
         {
             a[IDX(i,j,n)] = sf * (-1.0 * i + j);
+            //a[IDX(i,j,n)] = sf * ((i+1) * 10 + j+1);
         }
     }
 }
@@ -178,7 +174,7 @@ int main(int argc, char* argv[])
     // Prepare for kernel launches: use 2D grid
     dim3 blockDim(BlockDim, BlockDim);
     dim3 gridDim((n + blockDim.x - 1) / blockDim.x,
-                  (n + blockDim.y - 1) / blockDim.y); 
+                 (n + blockDim.y - 1) / blockDim.y); 
 
     // Compute product using global-memory-only kernel
     t0 = wtime();
