@@ -67,39 +67,39 @@
 //
 // Returns: long                 - number of samples inside quarter circle
 
-long genSamples( const long n, const gsl_rng* rng )
+long genSamples(const long n, const gsl_rng* rng)
 {
     long count = 0L;
 
-    for ( long i = 0L; i < n; i++ )
+    for (long i = 0L; i < n; i++)
     {
-        const double x = gsl_rng_uniform( rng );
-        const double y = gsl_rng_uniform( rng );
-        count += ( x * x + y * y < 1.0 ? 1 : 0 );
+        const double x = gsl_rng_uniform(rng);
+        const double y = gsl_rng_uniform(rng);
+        count += (x * x + y * y < 1.0 ? 1 : 0);
     }
 
     return count;
 }
 
 //----------------------------------------------------------------------------
-// Set up PRNG, generate n points in unit square, and return count of inside
-// unit circle.
+// Set up pseudo-random number generator (PRNG), generate n points in unit
+// square, and return count of inside unit circle.
 //
 // Input:   long numSamples  - number of samples
 //
 // Returns: long             - number of samples inside quarter circle
 
-long genRandomSamples( const long numSamples )
+long genRandomSamples(const long numSamples)
 {
     // Set up random number generator using PID and system time as seed
-    gsl_rng* rng = gsl_rng_alloc( gsl_rng_default );
-    gsl_rng_set( rng, 100 * getpid() + time( NULL ) );
+    gsl_rng* rng = gsl_rng_alloc(gsl_rng_default);
+    gsl_rng_set(rng, 100 * getpid() + time(NULL));
 
     // Generate the samples and count those inside the circle
-    long count = genSamples( numSamples, rng );
+    long count = genSamples(numSamples, rng);
 
     // Clean up
-    gsl_rng_free( rng );
+    gsl_rng_free(rng);
     return count;
 }
 
@@ -113,56 +113,56 @@ long genRandomSamples( const long numSamples )
 //
 // Returns: nothing
 
-void displayResults( long numSamples, double estimate, double wtime,
-                     bool noLabels )
+void displayResults(long numSamples, double estimate, double wtime,
+                    bool noLabels)
 {
     const char* format = 
-        ( noLabels ?
-          "%12.10f %10.3e %10.6f %ld\n" :
-          "Pi: %12.10f, error: %10.3e, seconds: %g, samples: %ld\n" );
-    printf( format, estimate, M_PI - estimate, wtime, numSamples );
+        (noLabels ?
+         "%12.10f %10.3e %10.6f %ld\n" :
+         "Pi: %12.10f, error: %10.3e, seconds: %g, samples: %ld\n");
+    printf(format, estimate, M_PI - estimate, wtime, numSamples);
 }
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
     long numSamples = 50000000L;
     bool quiet = false;
 
     // Process command line
     int c;
-    while ( ( c = getopt( argc, argv, "n:q" ) ) != -1 )
+    while ((c = getopt(argc, argv, "n:q")) != -1)
     {
-        switch( c )
+        switch(c)
         {
             case 'n':
-                numSamples = atol( optarg );
-                if ( numSamples <= 0 )
+                numSamples = atol(optarg);
+                if (numSamples <= 0)
                 {
-                    fprintf( stderr, "number of samples must be positive\n" );
-                    fprintf( stderr, "got: %ld\n", numSamples );
-                    exit( EXIT_FAILURE );
+                    fprintf(stderr, "number of samples must be positive\n");
+                    fprintf(stderr, "got: %ld\n", numSamples);
+                    exit(EXIT_FAILURE);
                 }
                 break;
             case 'q':
                 quiet = true;
                 break;
             default:
-                fprintf( stderr, "usage: %s [-n NUM_SAMPLES] [-q]\n", argv[0] );
-                exit( EXIT_FAILURE );
+                fprintf(stderr, "usage: %s [-n NUM_SAMPLES] [-q]\n", argv[0]);
+                exit(EXIT_FAILURE);
         }
     }
 
     // Get samples and compute estimate of Pi
     double t1 = wtime();
-    long count = genRandomSamples( numSamples );
-    double result = 4.0 * double( count ) / double( numSamples );
+    long count = genRandomSamples(numSamples);
+    double result = 4.0 * count / numSamples;
     double t2 = wtime();
 
     // Display result
-    displayResults( numSamples, result, t2 - t1, quiet );
+    displayResults(numSamples, result, t2 - t1, quiet);
 
     // All done
     return 0;
