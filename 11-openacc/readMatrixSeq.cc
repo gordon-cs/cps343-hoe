@@ -1,10 +1,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <hdf5.h>
+#include "readMatrixSeq.h"
 
-/* Check return values from HDF5 routines */
-#define CHKERR(status,name) if ( status < 0 ) \
-     fprintf( stderr, "Error: nonzero status (%d) in %s\n", status, name )
+// Check return values from HDF5 routines
+#define CHKERR(status,name) if (status < 0) \
+        fprintf(stderr, "Error: nonzero status (%d) in %s\n", status, name)
 
 //----------------------------------------------------------------------------
 // Opens an HDF5 file, determines the matrix dimensions, allocates
@@ -13,7 +14,7 @@
 void readMatrix(
     const char* filename, // in  - name of HDF5 file
     const char* path,     // in  - path within HDF5 file to matrix data
-    double** a,           // out - pointer to pointer to matrix data
+    double** A,           // out - pointer to pointer to matrix data
     int* rows,            // out - pointer to number of rows in matrix
     int* cols             // out - pointer to number of columns in matrix
     )
@@ -27,25 +28,26 @@ void readMatrix(
     int ndim;              // number of dimensions in HDF5 dataset
 
     // Open existing HDF5 file
-    file_id = H5Fopen( filename, H5F_ACC_RDONLY, H5P_DEFAULT );
-    if ( file_id < 0 ) exit( EXIT_FAILURE );
+    file_id = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (file_id < 0) exit(EXIT_FAILURE);
 
     // Open dataset in file
-    dataset_id = H5Dopen( file_id, path, H5P_DEFAULT );
-    if ( dataset_id < 0 ) exit( EXIT_FAILURE );
+    dataset_id = H5Dopen(file_id, path, H5P_DEFAULT);
+    if (dataset_id < 0) exit(EXIT_FAILURE);
 
     // Determine dataset parameters
-    dataspace_id = H5Dget_space( dataset_id );
-    ndim = H5Sget_simple_extent_ndims( dataspace_id );
-    dims = new hsize_t [ndim];
+    dataspace_id = H5Dget_space(dataset_id);
+    ndim = H5Sget_simple_extent_ndims(dataspace_id);
+    //dims = new hsize_t [ndim];
+    dims = (hsize_t*) calloc(ndim, sizeof(hsize_t));
 
     // Get dimensions for dataset
-    ndim = H5Sget_simple_extent_dims( dataspace_id, dims, NULL );
-    if ( ndim != 2 )
+    ndim = H5Sget_simple_extent_dims(dataspace_id, dims, NULL);
+    if (ndim != 2)
     {
-        fprintf( stderr, "Expected dataspace to be 2-dimensional " );
-        fprintf( stderr, "but it appears to be %d-dimensional\n", ndim );
-        exit( EXIT_FAILURE );
+        fprintf(stderr, "Expected dataspace to be 2-dimensional ");
+        fprintf(stderr, "but it appears to be %d-dimensional\n", ndim);
+        exit(EXIT_FAILURE);
     }
 
     // Store matrix dimensions in parameter locations
@@ -53,21 +55,35 @@ void readMatrix(
     *cols = dims[1];
 
     // Create memory dataspace
-    memspace_id = H5Screate_simple( ndim, dims, NULL );
-    if ( memspace_id < 0 ) exit( EXIT_FAILURE );
+    memspace_id = H5Screate_simple(ndim, dims, NULL);
+    if (memspace_id < 0) exit(EXIT_FAILURE);
 
     // Allocate memory for matrix and read data from file
-    *a = new double [dims[0] * dims[1]];
-    status = H5Dread( dataset_id, H5T_NATIVE_DOUBLE, memspace_id,
-                      dataspace_id, H5P_DEFAULT, *a );
-    CHKERR( status, "H5Dread()" );
+    //*A = new double [dims[0] * dims[1]];
+    *A = (double*) calloc(dims[0] * dims[1], sizeof(double));
+    status = H5Dread(dataset_id, H5T_NATIVE_DOUBLE, memspace_id,
+                     dataspace_id, H5P_DEFAULT, *A);
+    CHKERR(status, "H5Dread()");
 
     // Close all remaining HDF5 objects
-    CHKERR( H5Sclose( memspace_id ), "H5Sclose()" );
-    CHKERR( H5Dclose( dataset_id ), "H5Dclose()" );
-    CHKERR( H5Sclose( dataspace_id ), "H5Sclose()" );
-    CHKERR( H5Fclose( file_id ), "H5Fclose()" );
+    CHKERR(H5Sclose(memspace_id), "H5Sclose()");
+    CHKERR(H5Dclose(dataset_id), "H5Dclose()");
+    CHKERR(H5Sclose(dataspace_id), "H5Sclose()");
+    CHKERR(H5Fclose(file_id), "H5Fclose()");
 
     // Clean up
-    delete [] dims;
+    //delete [] dims;
+    free(dims);
+}
+
+
+//----------------------------------------------------------------------------
+// Release memory allocated during readMatrix()
+
+void destroyMatrix(
+    double* A             // in  - pointer to pointer to matrix data
+    )
+{
+    //delete [] A;
+    free(A);
 }

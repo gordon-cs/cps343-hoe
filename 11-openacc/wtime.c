@@ -28,21 +28,21 @@
 # include <sys/time.h>
 #endif
 
-double wtime( void )
+double wtime(void)
 {
 #if defined(__MACH__)
     /* Apple OS X */
     clock_serv_t cclock;
     mach_timespec_t mts;
-    host_get_clock_service( mach_host_self(), CALENDAR_CLOCK, &cclock );
-    clock_get_time( cclock, &mts );
-    mach_port_deallocate( mach_task_self(), cclock );
-    return (double) ( mts.tv_sec + mts.tv_nsec / 1.0e9 );
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    return (double) (mts.tv_sec + mts.tv_nsec / 1.0e9);
 #elif defined(_POSIX_TIMERS)
     /* Linux */
     struct timespec ts;
-    clock_gettime( CLOCK_MONOTONIC, &ts ); /* could be CLOCK_REALTIME */
-    return (double) ( ts.tv_sec + ts.tv_nsec / 1.0e9 );
+    clock_gettime(CLOCK_MONOTONIC, &ts); /* could be CLOCK_REALTIME */
+    return (double) (ts.tv_sec + ts.tv_nsec / 1.0e9);
 #elif defined(WIN32)
     /* Windows */
     LARGE_INTEGER perfCount;
@@ -53,6 +53,6 @@ double wtime( void )
 #else
     /* Other */
     struct tms buf;
-    return (double) times( &buf ) / (double) sysconf( _SC_CLK_TCK ) ;
+    return (double) times(&buf) / (double) sysconf(_SC_CLK_TCK);
 #endif
 }

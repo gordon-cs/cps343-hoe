@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-double wtime( void );
+double wtime(void);
 
 #ifdef __cplusplus
 }
