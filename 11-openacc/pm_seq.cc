@@ -1,5 +1,5 @@
 /*
- * $Smake: nvc++ -fast -o %F %f readMatrixSeq.cc wtime.c -lhdf5
+ * $Smake: nvc++ -fast -o %F %f -lhdf5
  *
  * Power Method
  */
@@ -10,11 +10,16 @@
 #include <cmath>
 #include <unistd.h>
 #include <hdf5.h>
-#include "wtime.h"
-#include "readMatrixSeq.h"
 
 // Compute index into single linear array for matrix element (i,j)
 #define IDX(i,j,stride) ((i)*(stride)+(j)) // row major
+
+//----------------------------------------------------------------------------
+
+// Include source code of functions to report wall clock time and
+// read matrix from HDF5 file.
+#include "./wtime.c"
+#include "./readMatrixSeq.cc"
 
 //----------------------------------------------------------------------------
 
