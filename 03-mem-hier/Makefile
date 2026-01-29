@@ -46,7 +46,7 @@ ifneq (,$(findstring atlas,$(LMOD_FAMILY_BLAS)))
   matrix_prod:	CFLAGS += -DHAVE_BLAS -DHAVE_CBLAS
   matrix_prod:	LDLIBS += -lcblas -lf77blas -latlas -lgfortran
 else ifneq (,$(findstring openblas,$(LMOD_FAMILY_BLAS)))
-  matrix_prod:	CFLAGS += -DHAVE_BLAS
+  matrix_prod:	CFLAGS += -DHAVE_BLAS -DHAVE_CBLAS
   matrix_prod:	LDLIBS += -lopenblas
 else
   matrix_prod:	CFLAGS += -DHAVE_GSL_CBLAS

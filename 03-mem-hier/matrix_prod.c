@@ -88,6 +88,7 @@ void dgemm(char transa, char transb, int m, int n, int k, double alpha,
 
 #if defined(HAVE_GSL_CBLAS)
 #include <gsl/gsl_cblas.h>
+#define HAVE_CBLAS
 #endif
 
 /*---------------------------------------------------------------------------
@@ -500,7 +501,7 @@ double multiply_by_blas(int argc, char* argv[], int verbosity)
 }
 #endif
 
-#if defined(HAVE_CBLAS) || defined(HAVE_GSL_CBLAS)
+#if defined(HAVE_CBLAS)
 /*---------------------------------------------------------------------------
  *
  * Compute matrix product using BLAS routine DGEMM.
@@ -825,10 +826,10 @@ int main(int argc, char* argv[])
 #if defined(HAVE_BLAS)
         "b"
 #endif
-#if defined(HAVE_CBLAS) || defined(HAVE_GSL_CBLAS)
+#if defined(HAVE_CBLAS)
         "c"
 #endif
-        "bn:r:t:v";
+        "n:r:t:v";
 
     while ((c = getopt(argc, argv, optstring)) != -1)
     {
@@ -878,7 +879,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "  %s -b M P N                  (BLAS)\n",
                 pname);
 #endif
-#if defined(HAVE_CBLAS) || defined(HAVE_GSL_CBLAS)
+#if defined(HAVE_CBLAS)
         fprintf(stderr, "  %s -c M P N                  (CBLAS)\n",
                 pname);
 #endif
@@ -926,7 +927,7 @@ int main(int argc, char* argv[])
             multiply_by_blas(argc, argv, verbosity);
             break;
 #endif
-#if defined(HAVE_CBLAS) || defined(HAVE_GSL_CBLAS)
+#if defined(HAVE_CBLAS)
         case MODE_CBLAS:
             if (argc < 3)
             {
