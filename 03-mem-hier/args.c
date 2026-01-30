@@ -25,8 +25,8 @@ const double X_MAX = 20.0;
 
 int main(int argc, char **argv)
 {
-    int    n = 1;     /* default value */
-    double x = 1.0;   /* default value */
+    int    n = N_MIN;   /* default value */
+    double x = X_MIN;   /* default value */
 
 #if defined(ARGS_REQUIRED)
     /*
