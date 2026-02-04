@@ -1,5 +1,5 @@
 /*
- * $Smake: g++ -Wall -O2 -o %F %f
+ * $Smake: g++ -Wall -funroll-loops -O3 -o %F %f
  *
  * Benchmark serial and parallel matrix-matrix products.  Parallel version
  * uses OpenMP and parallelizes the outer loop so that rows are assigned to
@@ -12,7 +12,7 @@
 #include <time.h>
 
 #if !defined(N)
-# define N 1000 // default matrix dimension
+# define N 1500 // default matrix dimension
 #endif
 #define IDX(i,j,stride) ((i)*(stride)+(j)) // row major (C/C++)
 
