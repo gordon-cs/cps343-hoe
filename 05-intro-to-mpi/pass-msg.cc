@@ -1,6 +1,7 @@
 // $Smake: mpic++ -Wall -O2 -o %F %f
 
-#include <cstdio>
+#include <iostream>
+#include <iomanip>
 #include <mpi.h>
 
 int main(int argc, char* argv[])
@@ -8,7 +9,7 @@ int main(int argc, char* argv[])
     int my_rank;
     int num_proc;
     int msg;
-    const int tag = 42; // the answer to the ultimate question
+    const int tag = 42;     // answer to the ultimate question
     MPI_Status status;
 
     // Initalize MPI
@@ -23,9 +24,11 @@ int main(int argc, char* argv[])
     if (my_rank == 0)
     {
         // We are the Rank 0 process so we start things off by sending the
-        // token to the rank 1 process
+        // message to the rank 1 process
 	msg = 1000;
-        printf("Process %d sending %d to process %d\n", my_rank, msg, next);
+        std::cout << "Process " << std::setw(2) << my_rank
+                  << " sending " << std::setw(4) << msg
+                  << " to process " << std::setw(2) << next << std::endl;
 	MPI_Send(&msg, 1, MPI_INT, next, tag, MPI_COMM_WORLD);
     }
     else
@@ -34,7 +37,8 @@ int main(int argc, char* argv[])
 	// from our predecessor, increment it, and send it along to our
 	// successor (if any).
 	MPI_Recv(&msg, 1, MPI_INT, prev, tag, MPI_COMM_WORLD, &status);
-        printf("Process %d received %d\n", my_rank, msg);
+        std::cout << "Process " << std::setw(2) << my_rank
+                  << " received " << std::setw(4) << msg << std::endl;
 
         // Increment message (so we know it's been here)
 	msg++;
@@ -42,8 +46,9 @@ int main(int argc, char* argv[])
         // If we're not the last process, send the message on...
         if (my_rank < num_proc - 1)
         {
-            printf("Process %d sending %d to process %d\n",
-                    my_rank, msg, next);
+            std::cout << "Process " << std::setw(2) << my_rank
+                      << " sending " << std::setw(4) << msg
+                      << " to process " << std::setw(2) << next << std::endl;
             MPI_Send(&msg, 1, MPI_INT, next, tag, MPI_COMM_WORLD);
         }
     }
