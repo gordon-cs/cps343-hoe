@@ -172,28 +172,28 @@ void exchange_halo_data(double* u, Cartesian_Block* grid,
     const int ny = grid->ny;
     const int m = grid->ny;
 
-    // Send top row of my data to bottom halo of neighbor above me and
-    // receive top row of data from neighbor below me into my bottom halo
+    // Send top row of my data to above neighbor and
+    // receive data from above neighbor into my top halo
     MPI_Sendrecv(&u[IDX(0,ny-2,m)], 1, x_slice, grid->above_neighbor, tag,
-                 &u[IDX(0,0,m)],    1, x_slice, grid->below_neighbor, tag,
-                 comm, MPI_STATUS_IGNORE);
-
-    // Send bottom row of my data to top halo of neighbor below me and
-    // receive bottom row of data from neighbor above me into my top halo
-    MPI_Sendrecv(&u[IDX(0,1,m)],    1, x_slice, grid->below_neighbor, tag,
                  &u[IDX(0,ny-1,m)], 1, x_slice, grid->above_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 
-    // Send right column of my data to left halo of my right neighbor and
-    // receive right column of data from my left neighbor into my left halo
-    MPI_Sendrecv(&u[IDX(nx-2,0,m)], 1, y_slice, grid->right_neighbor, tag,
-                 &u[IDX(0,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+    // Send bottom row of my data to below neighbor and
+    // receive data from below neighbor into my bottom halo
+    MPI_Sendrecv(&u[IDX(0,1,m)],    1, x_slice, grid->below_neighbor, tag,
+                 &u[IDX(0,0,m)],    1, x_slice, grid->below_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 
-    // Send left column of my data to right halo of my left neighbor and
-    // receive left column of data from my right neighbor into my right halo
-    MPI_Sendrecv(&u[IDX(1,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+    // Send right column of my data to right neighbor and
+    // receive data from right neighbor into my right halo
+    MPI_Sendrecv(&u[IDX(nx-2,0,m)], 1, y_slice, grid->right_neighbor, tag,
                  &u[IDX(nx-1,0,m)], 1, y_slice, grid->right_neighbor, tag,
+                 comm, MPI_STATUS_IGNORE);
+
+    // Send left column of my data to left neighbor and
+    // receive data from left neighbor into my left halo
+    MPI_Sendrecv(&u[IDX(1,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+                 &u[IDX(0,0,m)],    1, y_slice, grid->left_neighbor,  tag,
                  comm, MPI_STATUS_IGNORE);
 }
 
