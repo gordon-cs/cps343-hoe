@@ -3,7 +3,7 @@
  * Department of Mathematics and Computer Science
  * Gordon College, 255 Grapevine Road, Wenham MA 01984-1899
  * Written: August 2012.
- * Revised: April 2013, March 2016, March 2018, March 2020, March 2024.
+ * Revised: April 2013, March 2016, March 2018, March 2020, March 2024, March 2026
  *
  * $Smake: mpic++ -Wall -O2 -o %F %f -lhdf5
  *
@@ -113,7 +113,10 @@ void show_grid(double* v, int nx, int ny)
     printf("--------------------------------------------------------\n");
     for (int j = ny - 1; j >= 0; j--)
     {
-        for (int i = 0; i < nx; i++) printf(" %6.4f", v[IDX(i,j,ny)]);
+        for (int i = 0; i < nx; i++)
+        {
+            printf(" %6.4f", v[IDX(i,j,ny)]);
+        }
         printf("\n");
     }
     printf("--------------------------------------------------------\n");
@@ -172,28 +175,28 @@ void exchange_halo_data(double* u, Cartesian_Block* grid,
     const int ny = grid->ny;
     const int m = grid->ny;
 
-    // Send top row of my data to bottom halo of neighbor above me and
-    // receive bottom row of same neighbor's data into my top halo
+    // Send top row of my data to above neighbor and
+    // receive data from above neighbor into my top halo
     MPI_Sendrecv(&u[IDX(0,ny-2,m)], 1, x_slice, grid->above_neighbor, tag,
-                 &u[IDX(0,0,m)],    1, x_slice, grid->below_neighbor, tag,
-                 comm, MPI_STATUS_IGNORE);
-
-    // Send bottom row of my data to top halo of neighbor below me and
-    // receive top row of same neighbor's data into my bottom halo
-    MPI_Sendrecv(&u[IDX(0,1,m)],    1, x_slice, grid->below_neighbor, tag,
                  &u[IDX(0,ny-1,m)], 1, x_slice, grid->above_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 
-    // Send right column of my data to left halo of neighbor to my right
-    // and receive left column of same neighbor's data into my right halo
-    MPI_Sendrecv(&u[IDX(nx-2,0,m)], 1, y_slice, grid->right_neighbor, tag,
-                 &u[IDX(0,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+    // Send bottom row of my data to below neighbor and
+    // receive data from below neighbor into my bottom halo
+    MPI_Sendrecv(&u[IDX(0,1,m)],    1, x_slice, grid->below_neighbor, tag,
+                 &u[IDX(0,0,m)],    1, x_slice, grid->below_neighbor, tag,
                  comm, MPI_STATUS_IGNORE);
 
-    // Send left column of my data to right halo of neighbor to my left
-    // and receive right column of same neighbor's data into my left halo
-    MPI_Sendrecv(&u[IDX(1,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+    // Send right column of my data to right neighbor and
+    // receive data from right neighbor into my right halo
+    MPI_Sendrecv(&u[IDX(nx-2,0,m)], 1, y_slice, grid->right_neighbor, tag,
                  &u[IDX(nx-1,0,m)], 1, y_slice, grid->right_neighbor, tag,
+                 comm, MPI_STATUS_IGNORE);
+
+    // Send left column of my data to left neighbor and
+    // receive data from left neighbor into my left halo
+    MPI_Sendrecv(&u[IDX(1,0,m)],    1, y_slice, grid->left_neighbor,  tag,
+                 &u[IDX(0,0,m)],    1, y_slice, grid->left_neighbor,  tag,
                  comm, MPI_STATUS_IGNORE);
 }
 
@@ -449,7 +452,7 @@ int main(int argc, char *argv[])
 
     // Write grid data to HDF5 file
 
-    writeFile("cart-hdf5.dat", "/grid", u, NX, NY, &orig_grid, &halo_grid,
+    writeFile("cart-hdf5.h5", "/grid", u, NX, NY, &orig_grid, &halo_grid,
               comm2d);
 
     // Release memory and datatypes and then quit

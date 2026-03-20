@@ -3,7 +3,7 @@
  * Department of Mathematics and Computer Science
  * Gordon College, 255 Grapevine Road, Wenham MA 01984-1899
  * Written: August 2012.
- * Revised: March 2016, March 2018, March 2020, March 2024.
+ * Revised: March 2016, March 2018, March 2020, March 2024, March 2026
  *
  * $Smake: mpic++ -Wall -O2 -o %F %f
  *
