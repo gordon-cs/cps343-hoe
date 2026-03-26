@@ -1,4 +1,4 @@
-// $Smake: nvcc -O2 -o %F %f
+// $Smake: nvcc -arch=compute_61 -code=sm_61,sm_75,sm_80 -O3 -o %F %f
 //
 // add-vectors.cu - addition of two arrays on GPU device
 //
