@@ -54,8 +54,9 @@ __global__ void matmulShared(FLOAT* c, FLOAT* a, FLOAT* b, int n)
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-    // loop over row of blocks in matrix a and column of blocks
-    // in matrix b; storing blocks in shared mem, 
+    // loop over row of blocks in matrix a and column of blocks in
+    // matrix b; storing blocks in shared mem, then computing partial
+    // sum of products contributing to target element of matrix c
     FLOAT sum = (FLOAT) 0.0;
     const int numBlocks = (n + BlockDim - 1) / BlockDim;
     for (int m = 0; m < numBlocks; m++)
