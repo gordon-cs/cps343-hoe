@@ -10,7 +10,8 @@
 CC	:= gcc
 NVCC	:= nvcc
 OPTFLAGS:= -O3
-NVFLAGS	:= -Xptxas -v
+NVARCH	:= -arch=compute_61 -code=sm_61,sm_75,sm_80
+NVFLAGS	:= -Xptxas -v $(NVARCH)
 CFLAGS	:= $(OPTFLAGS)
 
 # List of sources and files to build from them
