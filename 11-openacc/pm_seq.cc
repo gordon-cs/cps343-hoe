@@ -58,8 +58,8 @@ void dumpMatrix(
 
 // Display contents of vector
 void dumpVector(
-    double* x,          // in  - vector (array) of data
-    int n               // in  - vector length
+    double* x,       // in  - vector (array) of data
+    int n            // in  - vector length
     )
 {
     for (int i = 0; i < n; i++) printf(" %9.6f\n", x[i]);
@@ -70,9 +70,9 @@ void dumpVector(
 
 // Copy contents of vector x into vector y
 void copyVector(
-    double* y,          // out - vector (array) of data
-    double* x,          // in  - vector (array) of data
-    int n               // in  - vector length
+    double* y,       // out - vector (array) of data
+    double* x,       // in  - vector (array) of data
+    int n            // in  - vector length
     )
 {
     for (int i = 0; i < n; i++) y[i] = x[i];
@@ -82,9 +82,9 @@ void copyVector(
 
 // Scale vector
 void scaleVector(
-    double sf,          // in     - scale factor
-    double* x,          // in/out - vector (array) of data
-    int n               // in     - vector length
+    double sf,       // in     - scale factor
+    double* x,       // in/out - vector (array) of data
+    int n            // in     - vector length
     )
 {
     for (int i = 0; i < n; i++) x[i] *= sf;
@@ -94,9 +94,9 @@ void scaleVector(
 
 // Compute inner (dot) product of two vectors
 double dotProduct(
-    double* x,          // in  - vector (array)
-    double* y,          // in  - vector (array)
-    int n               // in  - vector length
+    double* x,       // in  - vector (array)
+    double* y,       // in  - vector (array)
+    int n            // in  - vector length
     )
 {
     double sum = 0.0;
@@ -108,8 +108,8 @@ double dotProduct(
 
 // Compute L2 norm of vector
 double vectorNorm(
-    double* x,          // in  - vector (array)
-    int n               // in  - vector length
+    double* x,       // in  - vector (array)
+    int n            // in  - vector length
     )
 {
     return sqrt(dotProduct(x, x, n));
@@ -119,11 +119,11 @@ double vectorNorm(
 
 // Matrix-vector product
 void matrixVectorProduct(
-    double* y,          // out - m-element result vector
-    double* a,          // in  - mxn matrix (stored as 1-D array)
-    double* x,          // in  - n-element vector
-    int m,              // in  - row dimension of matrix, length of y
-    int n               // in  - col dimension of matrix, length of x
+    double* y,       // out - m-element result vector
+    double* a,       // in  - mxn matrix (stored as 1-D array)
+    double* x,       // in  - n-element vector
+    int m,           // in  - row dimension of matrix, length of y
+    int n            // in  - col dimension of matrix, length of x
     )
 {
     for (int i = 0; i < m; i++)
@@ -235,6 +235,7 @@ int main(int argc, char* argv[])
     num_iter = 0;
     delta = fabs(lambda - lambda_prev);
     t1 = wtime();
+
     while (delta > tol && num_iter++ < max_iter)
     {
         // compute new eigenvector estimate y := A*x
@@ -278,7 +279,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        printf("matrix dimensions: %d x %d; tolerance: %8.4e; ", n, n, tol );
+        printf("matrix dimensions: %d x %d; tolerance: %8.4e; ", n, n, tol);
         printf("max iterations: %d\n", max_iter);
         printf("elapsed HDF5 read time = %10.6f seconds\n", read_time);
         printf("elapsed compute time   = %10.6f seconds\n", compute_time);
